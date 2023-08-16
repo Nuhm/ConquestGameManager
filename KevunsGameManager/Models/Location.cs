@@ -15,6 +15,8 @@ namespace KevunsGameManager.Models
         public float LocationY { get; set; }
         public float LocationZ { get; set; }
 
+        public DateTime LastUsed { get; set; }
+
         public Location(int locationID, Boolean hasCooldown, float locationX, float locationY, float locationZ)
         {
             LocationID = locationID;

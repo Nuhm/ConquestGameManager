@@ -84,24 +84,58 @@ namespace KevunsGameManager
 
         private void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
-            var currentMap = 1; // Set as 1 for Test, need to add logic to find current map, via GameManager
+            var currentMap = 1; // Example: Get the current map ID
 
             var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == currentMap);
-            var availableLocationIDs = map.Locations.Select(location => location.LocationID).ToList();
-
-            if (availableLocationIDs.Count > 0)
+            if (map != null)
             {
-                var random = new System.Random();
-                var randomLocationID = availableLocationIDs[random.Next(availableLocationIDs.Count)];
+                var cooldownDuration = TimeSpan.FromSeconds(Main.Instance.Configuration.Instance.CooldownDurationSeconds);
+                var now = DateTime.UtcNow;
 
-                var location = map.Locations.FirstOrDefault(k => k.LocationID == randomLocationID);
+                var availableLocations = map.Locations
+                    .Where(location => now - location.LastUsed >= cooldownDuration)
+                    .ToList();
 
-                player.Player.teleportToLocationUnsafe(new Vector3(location.LocationX, location.LocationY, location.LocationZ), 1);
-
-                if (Main.Instance.Configuration.Instance.LoggingEnabled)
+                if (availableLocations.Count > 0)
                 {
-                    Logger.Log("Player respawn at spawn point " + randomLocationID + " on " + map.MapName + ".");
+                    var random = new System.Random();
+                    var randomLocation = availableLocations[random.Next(availableLocations.Count)];
+
+                    player.Player.teleportToLocationUnsafe(new Vector3(randomLocation.LocationX, randomLocation.LocationY, randomLocation.LocationZ), angle);
+                    randomLocation.LastUsed = now;
+
+                    if (Main.Instance.Configuration.Instance.LoggingEnabled)
+                    {
+                        Logger.Log($"Player respawn at spawn point {randomLocation.LocationID} on {map.MapName}.");
+                    }
                 }
+                else
+                {
+                    // If all locations are on cooldown, choose a random location from the least recently used locations (lowest 3)
+                    var leastRecentlyUsedLocations = map.Locations.OrderBy(location => location.LastUsed).Take(3).ToList();
+
+                    if (leastRecentlyUsedLocations.Count > 0)
+                    {
+                        var random = new System.Random();
+                        var randomLeastRecentlyUsedLocation = leastRecentlyUsedLocations[random.Next(leastRecentlyUsedLocations.Count)];
+
+                        player.Player.teleportToLocationUnsafe(new Vector3(randomLeastRecentlyUsedLocation.LocationX, randomLeastRecentlyUsedLocation.LocationY, randomLeastRecentlyUsedLocation.LocationZ), angle);
+                        randomLeastRecentlyUsedLocation.LastUsed = now;
+
+                        if (Main.Instance.Configuration.Instance.LoggingEnabled)
+                        {
+                            Logger.Log($"Player respawn at spawn point {randomLeastRecentlyUsedLocation.LocationID} on {map.MapName} (fallback).");
+                        }
+                    }
+                    else
+                    {
+                        Utility.Say(player, "No least recently used locations available.");
+                    }
+                }
+            }
+            else
+            {
+                Utility.Say(player, "Current map not found in configuration.");
             }
         }
 

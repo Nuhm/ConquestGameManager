@@ -14,11 +14,15 @@ namespace KevunsGameManager
         public bool LoggingEnabled { get; set; }
         public string ConnectionString { get; set; }
 
+        public int CooldownDurationSeconds { get; set; }
+
         public List<Map> Maps { get; set; }
 
         public void LoadDefaults()
         {
             ConnectionString = "server=localhost;user=root;database=unturned;port=3306;password=root";
+
+            CooldownDurationSeconds = 5;
 
             Maps = new List<Map>
             {
