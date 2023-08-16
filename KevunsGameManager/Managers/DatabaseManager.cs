@@ -1,12 +1,14 @@
 ﻿using KevunsGameManager.Models;
 using MySql.Data.MySqlClient;
 using Rocket.Core.Logging;
+using Rocket.Core.Steam;
 using SDG.Unturned;
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
 
 namespace KevunsGameManager.Managers
 {
@@ -14,6 +16,7 @@ namespace KevunsGameManager.Managers
     {
         public string ConnectionString { get; set; }
         public List<GamePlayer> Data { get; set; }
+        public List<GameMap> MapData { get; set; }
 
         public DatabaseManager() 
         { 
@@ -35,6 +38,8 @@ namespace KevunsGameManager.Managers
                 {
                     await Conn.OpenAsync();
                     await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` ( `SteamID` BIGINT UNSIGNED NOT NULL , `Username` VARCHAR NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , PRIMARY KEY (`SteamID`));", Conn).ExecuteScalarAsync();
+                    await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GameMapLocations` ( `MapID` INT UNSIGNED NOT NULL , `Map Name` VARCHAR NOT NULL , `Min Players` INT NOT NULL , `Max Players` INT NOT NULL , PRIMARY KEY (`MapID`));", Conn).ExecuteScalarAsync();
+                    await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GameMapSpawns` ( `LocationID` INT UNSIGNED NOT NULL , `Last Used` DATETIME NOT NULL , PRIMARY KEY (`LocationID`));", Conn).ExecuteScalarAsync();
                 }
                 catch (Exception ex)
                 {
@@ -112,17 +117,17 @@ namespace KevunsGameManager.Managers
 
         public void ChangeLastJoin(CSteamID steamID, DateTime time)
         {
-            Task.Run(async () => await SetDateTimeAsync(steamID, time, "Last Joined"));
+            Task.Run(async () => await SetDateTimeAsync(steamID, time, "GamePlayerInfo", "Last Joined"));
         }
 
-        public async Task SetDateTimeAsync(CSteamID steamID, DateTime dateTime, string coloumnName)
+        public async Task SetDateTimeAsync(CSteamID steamID, DateTime dateTime, string tableName, string coloumnName)
         {
             using (MySqlConnection Conn = new MySqlConnection(ConnectionString))
             {
                 try
                 {
                     await Conn.OpenAsync();
-                    MySqlCommand comm = new MySqlCommand($"UPDATE `GamePlayerInfo` SET `{coloumnName}` = @date WHERE `SteamID` = {steamID};", Conn);
+                    MySqlCommand comm = new MySqlCommand($"UPDATE `{tableName}` SET `{coloumnName}` = @date WHERE `SteamID` = {steamID};", Conn);
                     comm.Parameters.AddWithValue("@date", dateTime);
                     await comm.ExecuteScalarAsync();
 
@@ -138,6 +143,43 @@ namespace KevunsGameManager.Managers
                 catch (Exception ex)
                 {
                     Logger.Log($"Error changing time of {steamID} for coloumn {coloumnName} to {dateTime}");
+                    Logger.Log(ex);
+                }
+                finally
+                {
+                    await Conn.CloseAsync();
+                }
+            }
+        }
+
+        public void ChangeSpawnLastUsed(int locationID, DateTime time)
+        {
+            Task.Run(async () => await SetLastUsedAsync(locationID, time, "GameMapSpawns", "Last Used"));
+        }
+
+        public async Task SetLastUsedAsync(int locationID, DateTime dateTime, string tableName, string coloumnName)
+        {
+            using (MySqlConnection Conn = new MySqlConnection(ConnectionString))
+            {
+                try
+                {
+                    await Conn.OpenAsync();
+                    MySqlCommand comm = new MySqlCommand($"UPDATE `{tableName}` SET `{coloumnName}` = @date WHERE `LocationID` = {locationID};", Conn);
+                    comm.Parameters.AddWithValue("@date", dateTime);
+                    await comm.ExecuteScalarAsync();
+
+                    lock (Data)
+                    {
+                        GameMap data = MapData.FirstOrDefault(k => k.LocationID == locationID);
+                        if (data != null)
+                        {
+                            data.UpdateLastUsedTime(coloumnName, dateTime);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"Error changing time of {locationID} for coloumn {coloumnName} to {dateTime}");
                     Logger.Log(ex);
                 }
                 finally

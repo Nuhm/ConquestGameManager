@@ -86,6 +86,8 @@ namespace KevunsGameManager
         {
             { "Player_Connected", "[color=green]{0} has connected to the server[/color]" },
             { "Player_Disconnected", "[color=green]{0} has disconnected from the server[/color]" },
+            { "Id_Wrong", "[color=red]ID should be an integer![/color]" },
+            { "SetSpawn_Success", "[color=green]Successfully set map spawn[/color]" }
         };
 
 
