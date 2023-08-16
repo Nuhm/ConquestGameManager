@@ -17,6 +17,24 @@ namespace KevunsGameManager
             return value.Replace('[', '<').Replace(']', '>');
         }
 
+        public static void ClearInventory(this PlayerInventory inv)
+        {
+            inv.player.equipment.sendSlot(0);
+            inv.player.equipment.sendSlot(1);
+
+            for (byte page = 0; page < PlayerInventory.PAGES - 1; page++)
+            {
+                for (int index = inv.getItemCount(page) - 1; index >= 0; index--)
+                {
+                    inv.removeItem(page, (byte)index);
+                }
+            }
+
+            inv.player.clothing.updateClothes(0, 0, new byte[0], 0, 0, new byte[0], 0, 0, new byte[0], 0, 0, new byte[0], 0, 0, new byte[0], 0, 0, new byte[0], 0, 0, new byte[0]);
+            inv.player.equipment.sendSlot(0);
+            inv.player.equipment.sendSlot(1);
+        }
+
         public static void Say(IRocketPlayer target, string message)
         {
             if (target is UnturnedPlayer player)
