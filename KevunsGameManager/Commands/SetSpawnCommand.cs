@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Rocket.Unturned.Player;
 using System.Linq;
+using Rocket.Core.Steam;
+using KevunsGameManager.Models;
 
 namespace KevunsGameManager.Commands
 {
@@ -26,7 +28,7 @@ namespace KevunsGameManager.Commands
         {
             var player = caller as UnturnedPlayer;
 
-            if (command.Length != 1)
+            if (command.Length != 2)
             {
                 UnturnedChat.Say(caller, $"Correct Usage: {Syntax}", Color.red);
                 return;
@@ -44,19 +46,43 @@ namespace KevunsGameManager.Commands
                 return;
             }
 
-            var map = Main.Instance.DatabaseManager.MapData.FirstOrDefault(k => k.MapID == int.Parse(command[0])); // Checks if map exists in DB
+            var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == int.Parse(command[0])); // Checks if map exists in config
             if (map == null)
             {
                 Utility.Say(caller, Main.Instance.Translate("Map_Not_Found", mapID));
                 return;
             }
 
-            // Need logic to put locations in database under map ID
-            // Need prior logic to add columns for different maps with primary keys
+            var location = map.Locations.FirstOrDefault(k => k.LocationID == locationID);
+            if (location == null)
+            {
+                // Create a new location and add it to the map's Locations list
+                var newLocation = new Location
+                {
+                    LocationID = locationID,
+                    HasCooldown = false, // You might adjust this based on your requirements
+                    LocationX = player.Position.x,
+                    LocationY = player.Position.y,
+                    LocationZ = player.Position.z
+                };
 
-            var location = Main.Instance.DatabaseManager.MapData.FirstOrDefault(k => k.LocationID == int.Parse(command[1])); // Searches DB for location ID
+                map.Locations.Add(newLocation);
 
-            Utility.Say(caller, Main.Instance.Translate("SetSpawn_Success").ToRich());
+                // Save the modified configuration
+                Main.Instance.Configuration.Save();
+
+                Utility.Say(caller, Main.Instance.Translate("Added_Location", map.MapName, locationID).ToRich());
+
+                return;
+            }
+
+            location.LocationX = player.Position.x;
+            location.LocationY = player.Position.y;
+            location.LocationZ = player.Position.z;
+
+            Main.Instance.Configuration.Save();
+
+            Utility.Say(caller, Main.Instance.Translate("Updated_Location", map.MapName, locationID).ToRich());
         }
     }
 }

@@ -19,14 +19,18 @@ namespace KevunsGameManager.Models
 
         public string Username { get; set; }
 
+        public DateTime FirstJoined { get; set; }
+
         public DateTime LastJoined { get; set; }
 
 
-        public GamePlayer(CSteamID steamID, string username, DateTime lastJoined)
+        public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
             SteamID = steamID;
 
             Username = username;
+
+            FirstJoined = firstJoined;
 
             LastJoined = lastJoined;
         }

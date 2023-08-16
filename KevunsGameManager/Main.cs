@@ -19,6 +19,7 @@ using Logger = Rocket.Core.Logging.Logger;
 using Rocket.API;
 using Rocket.Core;
 using Steamworks;
+using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
 
 namespace KevunsGameManager
 {
@@ -26,6 +27,8 @@ namespace KevunsGameManager
     {
         protected override void Load()
         {
+            Instance = this;
+
             DatabaseManager = new DatabaseManager();
 
             U.Events.OnPlayerConnected += EventOnConnect;
@@ -41,6 +44,8 @@ namespace KevunsGameManager
 
         protected override void Unload()
         {
+            Instance = null;
+
             U.Events.OnPlayerConnected -= EventOnConnect;
             U.Events.OnPlayerDisconnected -= EventOnDisconnect;
             UnturnedPlayerEvents.OnPlayerDead -= EventOnDeath;
@@ -58,7 +63,7 @@ namespace KevunsGameManager
         {
             ThreadPool.QueueUserWorkItem(async (o) =>
             {
-                await DatabaseManager.AddPlayerAsync(player.CSteamID, player.CharacterName);
+                await DatabaseManager.AddPlayerAsync(player.CSteamID, player.DisplayName);
 
                 TaskDispatcher.QueueOnMainThread(() =>
                 {
@@ -79,7 +84,25 @@ namespace KevunsGameManager
 
         private void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
+            var currentMap = 1; // Set as 1 for Test, need to add logic to find current map, via GameManager
 
+            var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == currentMap);
+            var availableLocationIDs = map.Locations.Select(location => location.LocationID).ToList();
+
+            if (availableLocationIDs.Count > 0)
+            {
+                var random = new System.Random();
+                var randomLocationID = availableLocationIDs[random.Next(availableLocationIDs.Count)];
+
+                var location = map.Locations.FirstOrDefault(k => k.LocationID == randomLocationID);
+
+                player.Player.teleportToLocationUnsafe(new Vector3(location.LocationX, location.LocationY, location.LocationZ), 1);
+
+                if (Main.Instance.Configuration.Instance.LoggingEnabled)
+                {
+                    Logger.Log("Player respawn at spawn point " + randomLocationID + " on " + map.MapName + ".");
+                }
+            }
         }
 
         public override TranslationList DefaultTranslations => new TranslationList()
@@ -87,9 +110,9 @@ namespace KevunsGameManager
             { "Player_Connected", "[color=green]{0} has connected to the server[/color]" },
             { "Player_Disconnected", "[color=green]{0} has disconnected from the server[/color]" },
             { "Id_Wrong", "[color=red]ID should be an integer![/color]" },
-            { "SetSpawn_Success", "[color=green]Successfully set map spawn[/color]" }
+            { "Added_Location", "[color=green]Successfully added spawn to {0} with ID {1}[/color]" },
+            { "Updated_Location", "[color=green]Successfully updated spawn on {0} with ID {1}[/color]" }
         };
-
 
         public DatabaseManager DatabaseManager { get; set; }
         public static Main Instance { get; set; }
