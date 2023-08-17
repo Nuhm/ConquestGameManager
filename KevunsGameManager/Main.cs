@@ -39,6 +39,9 @@ namespace KevunsGameManager
             Harmony harmony = new Harmony("KevunsGameManager");
             harmony.PatchAll(Assembly);
 
+            Logger.Log($"Loaded {Configuration.Instance.Maps.Count} maps");
+            Logger.Log($"Loaded {Configuration.Instance.Gamemodes.Count} gamemodes");
+
             Logger.Log("KevunsGameManager has been loaded");
         }
 

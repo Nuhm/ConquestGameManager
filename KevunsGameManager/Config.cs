@@ -1,11 +1,13 @@
 ﻿using KevunsGameManager.Models;
 using Rocket.API;
+using Rocket.Core.Logging;
 using Rocket.Core.Steam;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace KevunsGameManager
 {
@@ -21,7 +23,7 @@ namespace KevunsGameManager
         public float lobbyZ { get; set; }
 
         public List<Map> Maps { get; set; }
-        public List<GameModeSettings> GamemodeSettings { get; set; }
+        public List<Gamemode> Gamemodes { get; set; }
 
         public void LoadDefaults()
         {
@@ -53,14 +55,14 @@ namespace KevunsGameManager
                     new Location(3, false, 0, 0, 0)
                 })
             };
-            GamemodeSettings = new List<GameModeSettings>
+            Gamemodes = new List<Gamemode>
             {
-                new GameModeSettings
+                new Gamemode
                 {
                     Name = "FFA",
                     HasTeams = false
                 },
-                new GameModeSettings
+                new Gamemode
                 {
                     Name = "TDM",
                     HasTeams = true
@@ -68,11 +70,5 @@ namespace KevunsGameManager
                 // Add more gamemode settings as needed
             };
         }
-    }
-
-    public class GameModeSettings
-    {
-        public string Name { get; set; }
-        public bool HasTeams { get; set; }
     }
 }
