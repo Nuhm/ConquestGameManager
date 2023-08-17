@@ -148,7 +148,8 @@ namespace KevunsGameManager
             { "Player_Disconnected", "[color=green]{0} has disconnected from the server[/color]" },
             { "Id_Wrong", "[color=red]ID should be an integer![/color]" },
             { "Added_Location", "[color=green]Successfully added spawn to {0} with ID {1}[/color]" },
-            { "Updated_Location", "[color=green]Successfully updated spawn on {0} with ID {1}[/color]" }
+            { "Updated_Location", "[color=green]Successfully updated spawn on {0} with ID {1}[/color]" },
+            { "Amended_Location", "[color=yellow]Amended spawn ID to {0}[/color]" }
         };
 
         public DatabaseManager DatabaseManager { get; set; }

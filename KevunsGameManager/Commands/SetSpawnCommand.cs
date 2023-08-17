@@ -28,7 +28,7 @@ namespace KevunsGameManager.Commands
         {
             var player = caller as UnturnedPlayer;
 
-            if (command.Length != 2)
+            if (command.Length < 2)
             {
                 UnturnedChat.Say(caller, $"Correct Usage: {Syntax}", Color.red);
                 return;
@@ -56,11 +56,12 @@ namespace KevunsGameManager.Commands
             var location = map.Locations.FirstOrDefault(k => k.LocationID == locationID);
             if (location == null)
             {
-                // Create a new location and add it to the map's Locations list
+                int newLocationID = map.Locations.Max(existingLocation => existingLocation.LocationID) + 1;
+
                 var newLocation = new Location
                 {
-                    LocationID = locationID,
-                    HasCooldown = false, // You might adjust this based on your requirements
+                    LocationID = newLocationID,
+                    HasCooldown = false,
                     LocationX = player.Position.x,
                     LocationY = player.Position.y,
                     LocationZ = player.Position.z
@@ -68,21 +69,23 @@ namespace KevunsGameManager.Commands
 
                 map.Locations.Add(newLocation);
 
-                // Save the modified configuration
-                Main.Instance.Configuration.Save();
+                if (int.Parse(command[1]) != newLocationID)
+                {
+                    Utility.Say(caller, Main.Instance.Translate("Amended_Location", newLocationID).ToRich());
+                }
 
-                Utility.Say(caller, Main.Instance.Translate("Added_Location", map.MapName, locationID).ToRich());
 
-                return;
+                Utility.Say(caller, Main.Instance.Translate("Added_Location", map.MapName, newLocationID).ToRich());
             }
+            else
+            {
+                location.LocationX = player.Position.x;
+                location.LocationY = player.Position.y;
+                location.LocationZ = player.Position.z;
 
-            location.LocationX = player.Position.x;
-            location.LocationY = player.Position.y;
-            location.LocationZ = player.Position.z;
-
+                Utility.Say(caller, Main.Instance.Translate("Updated_Location", map.MapName, locationID).ToRich());
+            }
             Main.Instance.Configuration.Save();
-
-            Utility.Say(caller, Main.Instance.Translate("Updated_Location", map.MapName, locationID).ToRich());
         }
     }
 }
