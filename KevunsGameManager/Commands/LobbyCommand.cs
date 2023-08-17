@@ -30,10 +30,11 @@ namespace KevunsGameManager.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = caller as UnturnedPlayer;
-            player.Player.teleportToLocationUnsafe(new Vector3(Main.Instance.Configuration.Instance.lobbyX, Main.Instance.Configuration.Instance.lobbyY, Main.Instance.Configuration.Instance.lobbyZ), 0);
-            UnturnedChat.Say(caller, "Returned to lobby");
 
             GameManager.Instance.PlayerLeftGame(player);
+
+            SpawnManager.Instance.RespawnPlayer(player);
+            UnturnedChat.Say(caller, "Returned to lobby");
         }
     }
 }

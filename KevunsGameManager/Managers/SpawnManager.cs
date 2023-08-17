@@ -1,5 +1,8 @@
 ﻿using KevunsGameManager.Models;
+using Rocket.Core.Steam;
 using Rocket.Unturned.Player;
+using SDG.Unturned;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,6 +89,23 @@ namespace KevunsGameManager.Managers
                             Utility.Say(player, "No least recently used locations available.");
                         }
                     }
+
+                    /*
+                     * Area should be change so that it applys the correct group for the two teams if there is two
+                     * For now will just be using groups to show if player is active or not for lobby testing
+                     */
+
+                    var steamGroupId = (CSteamID)2;
+                    var group = GroupManager.getOrAddGroup(steamGroupId, "Active Players Group", out var wasCreated);
+
+                    if (!wasCreated)
+                    {
+                        group.name = "Active Players Group";
+                        GroupManager.sendGroupInfo(group);
+                    }
+
+                    player.Player.quests.ServerAssignToGroup(steamGroupId, EPlayerGroupRank.MEMBER, true);
+
                 }
                 else
                 {
@@ -99,8 +119,18 @@ namespace KevunsGameManager.Managers
                     Logger.Log($"{player} is not an active player, returning them to the lobby");
                 }
                 player.Player.teleportToLocationUnsafe(new Vector3(Main.Instance.Configuration.Instance.lobbyX, Main.Instance.Configuration.Instance.lobbyY, Main.Instance.Configuration.Instance.lobbyZ), 0);
-            }
 
+                var steamGroupId = (CSteamID)1;
+                var group = GroupManager.getOrAddGroup(steamGroupId, "Inactive Players Group", out var wasCreated);
+
+                if (!wasCreated)
+                {
+                    group.name = "Inactive Players Group";
+                    GroupManager.sendGroupInfo(group);
+                }
+
+                player.Player.quests.ServerAssignToGroup(steamGroupId, EPlayerGroupRank.MEMBER, true);
+            }
         }
     }
 }
