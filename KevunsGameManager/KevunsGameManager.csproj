@@ -107,6 +107,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Libraries\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
+    <Reference Include="System.Xml" />
     <Reference Include="Ubiety.Dns.Core">
       <HintPath>Libraries\Ubiety.Dns.Core.dll</HintPath>
     </Reference>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization; // Import the XmlSerializer namespace
 
 namespace KevunsGameManager.Models
 {
@@ -15,6 +16,7 @@ namespace KevunsGameManager.Models
         public float LocationY { get; set; }
         public float LocationZ { get; set; }
 
+        [XmlIgnore] // Prevent LastUsed from being automatically serialized/deserialized
         public DateTime LastUsed { get; set; }
 
         public Location(int locationID, Boolean hasCooldown, float locationX, float locationY, float locationZ)
@@ -27,8 +29,6 @@ namespace KevunsGameManager.Models
             LocationZ = locationZ;
         }
 
-        public Location() {
-
-        }
+        public Location() { }
     }
 }

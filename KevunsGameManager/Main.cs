@@ -96,6 +96,9 @@ namespace KevunsGameManager
                     .Where(location => now - location.LastUsed >= cooldownDuration)
                     .ToList();
 
+                // Remove locations that were used within the cooldown duration
+                availableLocations.RemoveAll(location => now - location.LastUsed < cooldownDuration);
+
                 if (availableLocations.Count > 0)
                 {
                     var random = new System.Random();
