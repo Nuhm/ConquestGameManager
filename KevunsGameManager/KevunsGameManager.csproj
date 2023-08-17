@@ -31,10 +31,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Commands\DeployCommand.cs" />
+    <Compile Include="Commands\LobbyCommand.cs" />
     <Compile Include="Commands\SetSpawnCommand.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Managers\DatabaseManager.cs" />
+    <Compile Include="Managers\GameManager.cs" />
+    <Compile Include="Managers\SpawnManager.cs" />
     <Compile Include="Models\Location.cs" />
     <Compile Include="Models\Map.cs" />
     <Compile Include="Models\GamePlayer.cs" />

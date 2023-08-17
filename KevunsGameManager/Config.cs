@@ -16,13 +16,21 @@ namespace KevunsGameManager
 
         public int CooldownDurationSeconds { get; set; }
 
+        public float lobbyX { get; set; }
+        public float lobbyY { get; set; }
+        public float lobbyZ { get; set; }
+
         public List<Map> Maps { get; set; }
+        public List<GameModeSettings> GamemodeSettings { get; set; }
 
         public void LoadDefaults()
         {
             ConnectionString = "server=localhost;user=root;database=unturned;port=3306;password=root";
-
             CooldownDurationSeconds = 5;
+
+            lobbyX = 0;
+            lobbyY = 0;
+            lobbyZ = 0;
 
             Maps = new List<Map>
             {
@@ -45,6 +53,26 @@ namespace KevunsGameManager
                     new Location(3, false, 0, 0, 0)
                 })
             };
+            GamemodeSettings = new List<GameModeSettings>
+            {
+                new GameModeSettings
+                {
+                    Name = "FFA",
+                    HasTeams = false
+                },
+                new GameModeSettings
+                {
+                    Name = "TDM",
+                    HasTeams = true
+                }
+                // Add more gamemode settings as needed
+            };
         }
+    }
+
+    public class GameModeSettings
+    {
+        public string Name { get; set; }
+        public bool HasTeams { get; set; }
     }
 }

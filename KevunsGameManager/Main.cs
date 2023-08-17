@@ -70,6 +70,7 @@ namespace KevunsGameManager
                     GamePlayer gPlayer = DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
                 });
             });
+            SpawnManager.Instance.RespawnPlayer(player);
         }
 
         private void EventOnDisconnect(UnturnedPlayer player)
@@ -84,62 +85,7 @@ namespace KevunsGameManager
 
         private void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
-            var currentMap = 1; // Example: Get the current map ID
-
-            var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == currentMap);
-            if (map != null)
-            {
-                var cooldownDuration = TimeSpan.FromSeconds(Main.Instance.Configuration.Instance.CooldownDurationSeconds);
-                var now = DateTime.UtcNow;
-
-                var availableLocations = map.Locations
-                    .Where(location => now - location.LastUsed >= cooldownDuration)
-                    .ToList();
-
-                // Remove locations that were used within the cooldown duration
-                availableLocations.RemoveAll(location => now - location.LastUsed < cooldownDuration);
-
-                if (availableLocations.Count > 0)
-                {
-                    var random = new System.Random();
-                    var randomLocation = availableLocations[random.Next(availableLocations.Count)];
-
-                    player.Player.teleportToLocationUnsafe(new Vector3(randomLocation.LocationX, randomLocation.LocationY, randomLocation.LocationZ), angle);
-                    randomLocation.LastUsed = now;
-
-                    if (Main.Instance.Configuration.Instance.LoggingEnabled)
-                    {
-                        Logger.Log($"Player respawn at spawn point {randomLocation.LocationID} on {map.MapName}.");
-                    }
-                }
-                else
-                {
-                    // If all locations are on cooldown, choose a random location from the least recently used locations (lowest 3)
-                    var leastRecentlyUsedLocations = map.Locations.OrderBy(location => location.LastUsed).Take(3).ToList();
-
-                    if (leastRecentlyUsedLocations.Count > 0)
-                    {
-                        var random = new System.Random();
-                        var randomLeastRecentlyUsedLocation = leastRecentlyUsedLocations[random.Next(leastRecentlyUsedLocations.Count)];
-
-                        player.Player.teleportToLocationUnsafe(new Vector3(randomLeastRecentlyUsedLocation.LocationX, randomLeastRecentlyUsedLocation.LocationY, randomLeastRecentlyUsedLocation.LocationZ), angle);
-                        randomLeastRecentlyUsedLocation.LastUsed = now;
-
-                        if (Main.Instance.Configuration.Instance.LoggingEnabled)
-                        {
-                            Logger.Log($"Player respawn at spawn point {randomLeastRecentlyUsedLocation.LocationID} on {map.MapName} (fallback).");
-                        }
-                    }
-                    else
-                    {
-                        Utility.Say(player, "No least recently used locations available.");
-                    }
-                }
-            }
-            else
-            {
-                Utility.Say(player, "Current map not found in configuration.");
-            }
+            SpawnManager.Instance.RespawnPlayer(player);
         }
 
         public override TranslationList DefaultTranslations => new TranslationList()
