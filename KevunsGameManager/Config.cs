@@ -18,9 +18,9 @@ namespace KevunsGameManager
 
         public int CooldownDurationSeconds { get; set; }
 
-        public float lobbyX { get; set; }
-        public float lobbyY { get; set; }
-        public float lobbyZ { get; set; }
+        public float LobbyX { get; set; }
+        public float LobbyY { get; set; }
+        public float LobbyZ { get; set; }
 
         public List<Map> Maps { get; set; }
         public List<Gamemode> Gamemodes { get; set; }
@@ -30,9 +30,9 @@ namespace KevunsGameManager
             ConnectionString = "server=localhost;user=root;database=unturned;port=3306;password=root";
             CooldownDurationSeconds = 5;
 
-            lobbyX = 0;
-            lobbyY = 0;
-            lobbyZ = 0;
+            LobbyX = 0;
+            LobbyY = 0;
+            LobbyZ = 0;
 
             Maps = new List<Map>
             {

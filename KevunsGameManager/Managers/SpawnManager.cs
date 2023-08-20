@@ -118,7 +118,7 @@ namespace KevunsGameManager.Managers
                 {
                     Logger.Log($"{player} is not an active player, returning them to the lobby");
                 }
-                player.Player.teleportToLocationUnsafe(new Vector3(Main.Instance.Configuration.Instance.lobbyX, Main.Instance.Configuration.Instance.lobbyY, Main.Instance.Configuration.Instance.lobbyZ), 0);
+                player.Player.teleportToLocationUnsafe(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
 
                 var steamGroupId = (CSteamID)1;
                 var group = GroupManager.getOrAddGroup(steamGroupId, "Inactive Players Group", out var wasCreated);
