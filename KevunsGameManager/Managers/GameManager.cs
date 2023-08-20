@@ -70,7 +70,7 @@ namespace KevunsGameManager.Managers
             if (!ActivePlayers.Contains(player))
             {
                 ActivePlayers.Add(player);
-                Logger.Log("Player joined game");
+                Logger.Log($"{player} joined game");
             }
         }
 
@@ -79,7 +79,7 @@ namespace KevunsGameManager.Managers
             if (ActivePlayers.Contains(player))
             {
                 ActivePlayers.Remove(player);
-                Logger.Log("Player left game");
+                Logger.Log($"{player} left game");
             }
         }
 

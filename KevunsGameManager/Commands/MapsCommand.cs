@@ -32,8 +32,17 @@ namespace KevunsGameManager.Commands
                 return;
             }
 
-            var mapNames = maps.Select(map => map.MapName);
-            var mapsMessage = "Available maps: " + string.Join(", ", mapNames);
+            var enabledMapNames = maps
+                .Where(map => map.IsEnabled)
+                .Select(map => map.MapName);
+
+            if (enabledMapNames.Count() == 0)
+            {
+                UnturnedChat.Say(caller, "No enabled maps available.");
+                return;
+            }
+
+            var mapsMessage = "Available enabled maps: " + string.Join(", ", enabledMapNames);
             UnturnedChat.Say(caller, mapsMessage);
         }
     }
