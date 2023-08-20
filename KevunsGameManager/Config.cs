@@ -41,19 +41,19 @@ namespace KevunsGameManager
                     new Location(1, false, 0, 0, 0),
                     new Location(2, false, 0, 0, 0),
                     new Location(3, false, 0, 0, 0)
-                }),
+                }, true),
                 new Map(2, "Warehouse", 0, 40, new List<Location>
                 {
                     new Location(1, false, 0, 0, 0),
                     new Location(2, false, 0, 0, 0),
                     new Location(3, false, 0, 0, 0)
-                }),
+                }, true),
                 new Map(3, "Bunker", 0, 40, new List<Location>
                 {
                     new Location(1, false, 0, 0, 0),
                     new Location(2, false, 0, 0, 0),
                     new Location(3, false, 0, 0, 0)
-                })
+                }, true)
             };
             Gamemodes = new List<Gamemode>
             {

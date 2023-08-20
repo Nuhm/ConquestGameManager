@@ -14,14 +14,17 @@ namespace KevunsGameManager.Models
         public int MaxPlayers { get; set; }
 
         public List<Location> Locations { get; set; }
+        
+        public bool IsEnabled { get; set; }
 
-        public Map(int mapID, string mapName, int minPlayers, int maxPlayers, List<Location> locations) 
+        public Map(int mapID, string mapName, int minPlayers, int maxPlayers, List<Location> locations, bool isEnabled) 
         {
             MapID = mapID;
             MapName = mapName;
             MinPlayers = minPlayers;
             MaxPlayers = maxPlayers;
             Locations = locations;
+            IsEnabled = isEnabled;
         }
 
         public Map() {
