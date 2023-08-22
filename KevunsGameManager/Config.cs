@@ -60,12 +60,16 @@ namespace KevunsGameManager
                 new Gamemode
                 {
                     Name = "FFA",
-                    HasTeams = false
+                    Duration = 20,
+                    HasTeams = false,
+                    IsEnabled = true,
                 },
                 new Gamemode
                 {
                     Name = "TDM",
-                    HasTeams = true
+                    Duration= 20,
+                    HasTeams = true,
+                    IsEnabled = true
                 }
                 // Add more gamemode settings as needed
             };

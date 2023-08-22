@@ -43,6 +43,9 @@ namespace KevunsGameManager
             Logger.Log($"Loaded {Configuration.Instance.Gamemodes.Count} gamemodes");
 
             Logger.Log("KevunsGameManager has been loaded");
+            
+            GameManager.Instance.Start();
+            Logger.Log("Started GameManager");
         }
 
         protected override void Unload()
@@ -102,6 +105,7 @@ namespace KevunsGameManager
         };
 
         public DatabaseManager DatabaseManager { get; set; }
+        public GameManager GameManager { get; set; }
         public static Main Instance { get; set; }
     }
 }
