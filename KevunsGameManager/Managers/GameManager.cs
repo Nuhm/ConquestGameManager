@@ -1,9 +1,14 @@
 ﻿using System;
 using Rocket.Unturned.Player;
-using Rocket.Core.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Rocket.Core.Utils;
+using Rocket.Unturned.Chat;
+using SDG.Unturned;
+using Steamworks;
+using UnityEngine;
+using Logger = Rocket.Core.Logging.Logger;
 
 namespace KevunsGameManager.Managers
 {
@@ -53,7 +58,37 @@ namespace KevunsGameManager.Managers
 
             if (gameModes[currentGameModeIndex].IsFinished)
             {
+                ReturnToLobby();
                 SwitchToNextGameMode();
+                
+                string announcement = $"New game mode: {gameModes[currentGameModeIndex].Name} is starting!";
+                // Send the announcement to all players using UnturnedChat
+                UnturnedChat.Say(announcement, Color.yellow);
+                
+            }
+        }
+
+        private void ReturnToLobby()
+        {
+            List<UnturnedPlayer> playersToTeleport = new List<UnturnedPlayer>();
+
+            foreach (var player in ActivePlayers)
+            {
+                playersToTeleport.Add(player);
+            }
+
+            foreach (var player in playersToTeleport)
+            {
+                TaskDispatcher.QueueOnMainThread(() =>
+                {
+                    if (player == null)
+                        return;
+
+                    player.Teleport(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
+                    // return to lobby message
+                });
+                
+                ActivePlayers.Remove(player);
             }
         }
 
@@ -120,7 +155,7 @@ namespace KevunsGameManager.Managers
                 while (!IsFinished && remainingTime > TimeSpan.Zero)
                 {
                     LogCountdown();
-                    await Task.Delay(TimeSpan.FromSeconds(5)); // Log every 5 seconds, adjust as needed
+                    await Task.Delay(TimeSpan.FromSeconds(5)); // Log every 5 seconds
                 }
             });
         }

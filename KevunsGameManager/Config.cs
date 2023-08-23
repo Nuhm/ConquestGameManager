@@ -67,11 +67,10 @@ namespace KevunsGameManager
                 new Gamemode
                 {
                     Name = "TDM",
-                    Duration= 20,
+                    Duration = 20,
                     HasTeams = true,
                     IsEnabled = true
                 }
-                // Add more gamemode settings as needed
             };
         }
     }
