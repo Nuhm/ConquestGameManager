@@ -61,10 +61,7 @@ namespace KevunsGameManager.Managers
                 ReturnToLobby();
                 SwitchToNextGameMode();
                 
-                string announcement = $"New game mode: {gameModes[currentGameModeIndex].Name} is starting!";
-                // Send the announcement to all players using UnturnedChat
-                UnturnedChat.Say(announcement, Color.yellow);
-                
+                UnturnedChat.Say($"A new {gameModes[currentGameModeIndex].Name} game is starting!", Color.yellow);
             }
         }
 
@@ -155,7 +152,7 @@ namespace KevunsGameManager.Managers
                 while (!IsFinished && remainingTime > TimeSpan.Zero)
                 {
                     LogCountdown();
-                    await Task.Delay(TimeSpan.FromSeconds(5)); // Log every 5 seconds
+                    await Task.Delay(TimeSpan.FromSeconds(1)); // Log every second
                 }
             });
         }
@@ -174,6 +171,12 @@ namespace KevunsGameManager.Managers
         {
             TimeSpan formattedTime = TimeSpan.FromSeconds(Math.Ceiling(remainingTime.TotalSeconds));
             Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds} seconds");
+
+            // Check if the remaining time matches any of the specified countdown values
+            if (formattedTime.TotalSeconds == 30 || formattedTime.TotalSeconds == 10 || formattedTime.TotalSeconds <= 5)
+            {
+                UnturnedChat.Say($"Only {formattedTime.TotalSeconds} seconds left in this {Name} game!", Color.yellow);
+            }
         }
     }
 }
