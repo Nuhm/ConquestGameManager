@@ -30,6 +30,12 @@ namespace KevunsGameManager.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = caller as UnturnedPlayer;
+            
+            if (GameManager.Instance.ActivePlayers.Contains(player))
+            {
+                UnturnedChat.Say(caller, "You are already deployed!");
+                return;
+            }
 
             GameManager.Instance.PlayerJoinedGame(player);
 
