@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Rocket.Core.Utils;
+using Rocket.Unturned.Chat;
 using SDG.Unturned;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
@@ -49,23 +50,18 @@ namespace KevunsGameManager.Managers
             });
         }
         
-        public void Update(TimeSpan elapsedTime)
+        private void Update(TimeSpan elapsedTime)
         {
             gameModes[currentGameModeIndex].Update(elapsedTime);
 
             if (gameModes[currentGameModeIndex].IsFinished)
             {
-                TaskDispatcher.QueueOnMainThread(() =>
+                TaskDispatcher.QueueOnMainThread( () =>
                     {
                         ReturnToLobby();
-                        try
-                        {
-                            Utility.Broadcast("A new game is starting!");
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.LogException(ex);
-                        }
+                        
+                        Utility.Broadcast("The game has just ended!");
+                        Utility.Broadcast("A new game is starting!");
 
                         SwitchToNextGameMode();
                     }
@@ -90,7 +86,7 @@ namespace KevunsGameManager.Managers
                         return;
 
                     player.Teleport(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
-                    // return to lobby message
+                    UnturnedChat.Say(player, "You have been returned to the lobby!");
                 });
                 
                 ActivePlayers.Remove(player);
@@ -117,7 +113,6 @@ namespace KevunsGameManager.Managers
                 return false; // Invalid gamemode
             }
     
-            // Stop the current game mode immediately by setting its remaining time to 0
             gameModes[currentGameModeIndex].Stop();
 
             ReturnToLobby();
@@ -126,7 +121,18 @@ namespace KevunsGameManager.Managers
             return true;
         }
 
-
+        public TimeSpan GetRemainingTime()
+        {
+            if (currentGameModeIndex >= 0 && currentGameModeIndex < gameModes.Count)
+            {
+                return gameModes[currentGameModeIndex].RemainingTime;
+            }
+            else
+            {
+                // Handle the case where the currentGameModeIndex is invalid
+                return TimeSpan.Zero; // Or some default value
+            }
+        }
 
         public void PlayerJoinedGame(UnturnedPlayer player)
         {

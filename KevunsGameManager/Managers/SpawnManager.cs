@@ -37,9 +37,12 @@ namespace KevunsGameManager.Managers
         {
             var currentMap = 1; // Example: Get the current map ID
             byte angle = 0;
+            
+            var remainingTime = GameManager.Instance.GetRemainingTime();
+            double remainingSeconds = remainingTime.TotalSeconds;
 
-            if (GameManager.Instance.ActivePlayers.Contains(player))
-            {
+            if (GameManager.Instance.ActivePlayers.Contains(player) && remainingSeconds > Main.Instance.Configuration.Instance.RespawnLimitSeconds)
+            {  
                 var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == currentMap);
                 if (map != null)
                 {

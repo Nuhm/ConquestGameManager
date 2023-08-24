@@ -24,6 +24,9 @@ namespace KevunsGameManager
 
         public List<Map> Maps { get; set; }
         public List<Gamemode> Gamemodes { get; set; }
+        
+        public int DeployLimitSeconds { get; set; }
+        public int RespawnLimitSeconds { get; set; }
 
         public void LoadDefaults()
         {
@@ -72,6 +75,8 @@ namespace KevunsGameManager
                     IsEnabled = true
                 }
             };
+            DeployLimitSeconds = 10;
+            RespawnLimitSeconds = 10;
         }
     }
 }

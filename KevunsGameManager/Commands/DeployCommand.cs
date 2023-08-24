@@ -36,6 +36,15 @@ namespace KevunsGameManager.Commands
                 UnturnedChat.Say(caller, "You are already deployed!");
                 return;
             }
+            
+            var remainingTime = GameManager.Instance.GetRemainingTime();
+            double remainingSeconds = remainingTime.TotalSeconds;
+            
+            if (remainingSeconds <= Main.Instance.Configuration.Instance.DeployLimitSeconds)
+            {
+                UnturnedChat.Say(caller, "You can't deploy right now, the game is ending soon.");
+                return;
+            }
 
             GameManager.Instance.PlayerJoinedGame(player);
 
