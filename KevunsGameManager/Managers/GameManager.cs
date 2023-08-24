@@ -4,9 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Rocket.Core.Utils;
-using Rocket.Unturned.Chat;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 
@@ -41,13 +39,12 @@ namespace KevunsGameManager.Managers
 
             isRunning = true;
 
-            // Start the update loop in a separate task
             Task.Run(async () =>
             {
                 while (isRunning)
                 {
-                    Update(TimeSpan.FromSeconds(1)); // Call the Update method with a fixed time interval
-                    await Task.Delay(TimeSpan.FromSeconds(1)); // Delay for 1 second between updates
+                    Update(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             });
         }
@@ -58,10 +55,21 @@ namespace KevunsGameManager.Managers
 
             if (gameModes[currentGameModeIndex].IsFinished)
             {
-                ReturnToLobby();
-                SwitchToNextGameMode();
-                
-                UnturnedChat.Say($"A new {gameModes[currentGameModeIndex].Name} game is starting!", Color.yellow);
+                TaskDispatcher.QueueOnMainThread(() =>
+                    {
+                        ReturnToLobby();
+                        try
+                        {
+                            Utility.Broadcast("A new game is starting!");
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogException(ex);
+                        }
+
+                        SwitchToNextGameMode();
+                    }
+                );
             }
         }
 
@@ -99,6 +107,26 @@ namespace KevunsGameManager.Managers
         {
             gameModes[index].Start();
         }
+        
+        public bool ChangeGameMode(UnturnedPlayer player, string newMode)
+        {
+            int newModeIndex = gameModes.FindIndex(mode => mode.Name.Equals(newMode, StringComparison.OrdinalIgnoreCase));
+
+            if (newModeIndex == -1)
+            {
+                return false; // Invalid gamemode
+            }
+    
+            // Stop the current game mode immediately by setting its remaining time to 0
+            gameModes[currentGameModeIndex].Stop();
+
+            ReturnToLobby();
+            SwitchToGameMode(newModeIndex);
+    
+            return true;
+        }
+
+
 
         public void PlayerJoinedGame(UnturnedPlayer player)
         {
@@ -151,12 +179,17 @@ namespace KevunsGameManager.Managers
             {
                 while (!IsFinished && remainingTime > TimeSpan.Zero)
                 {
-                    LogCountdown();
+                    TaskDispatcher.QueueOnMainThread(LogCountdown);
                     await Task.Delay(TimeSpan.FromSeconds(1)); // Log every second
                 }
             });
         }
 
+        public void Stop()
+        {
+            IsFinished = true;
+        }
+        
         public void Update(TimeSpan elapsedTime)
         {
             remainingTime -= elapsedTime;
@@ -170,12 +203,20 @@ namespace KevunsGameManager.Managers
         private void LogCountdown()
         {
             TimeSpan formattedTime = TimeSpan.FromSeconds(Math.Ceiling(remainingTime.TotalSeconds));
-            Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds} seconds");
-
-            // Check if the remaining time matches any of the specified countdown values
-            if (formattedTime.TotalSeconds == 30 || formattedTime.TotalSeconds == 10 || formattedTime.TotalSeconds <= 5)
+            double remainingSeconds = formattedTime.TotalSeconds;
+            
+            if (Main.Instance.Configuration.Instance.LoggingEnabled)
             {
-                UnturnedChat.Say($"Only {formattedTime.TotalSeconds} seconds left in this {Name} game!", Color.yellow);
+                Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds}");
+            }
+
+            if (remainingSeconds >= 1 && remainingSeconds <= 30)
+            {
+                List<int> countdownThresholds = new List<int> { 30, 10, 5, 4, 3, 2, 1 };
+                if (countdownThresholds.Contains((int)remainingSeconds))
+                {
+                    Utility.Broadcast($"Only {(int)remainingSeconds} seconds left in this {Name} game!");
+                }
             }
         }
     }

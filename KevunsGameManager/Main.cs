@@ -31,6 +31,8 @@ namespace KevunsGameManager
 
             DatabaseManager = new DatabaseManager();
 
+            Level.onPostLevelLoaded += OnLevelLoaded;
+            
             U.Events.OnPlayerConnected += EventOnConnect;
             U.Events.OnPlayerDisconnected += EventOnDisconnect;
             UnturnedPlayerEvents.OnPlayerDead += EventOnDeath;
@@ -43,14 +45,13 @@ namespace KevunsGameManager
             Logger.Log($"Loaded {Configuration.Instance.Gamemodes.Count} gamemodes");
 
             Logger.Log("KevunsGameManager has been loaded");
-            
-            GameManager.Instance.Start();
-            Logger.Log("Started GameManager");
         }
 
         protected override void Unload()
         {
             Instance = null;
+
+            Level.onPostLevelLoaded -= OnLevelLoaded;
 
             U.Events.OnPlayerConnected -= EventOnConnect;
             U.Events.OnPlayerDisconnected -= EventOnDisconnect;
@@ -63,6 +64,12 @@ namespace KevunsGameManager
             }
 
             Logger.Log("KevunsGameManager has been unloaded");
+        }
+
+        private void OnLevelLoaded(int level)
+        {
+            GameManager.Instance.Start();
+            Logger.Log("Started GameManager");
         }
 
         private void EventOnConnect(UnturnedPlayer player)
