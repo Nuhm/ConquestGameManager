@@ -1,27 +1,19 @@
-using Rocket.API;
-using Rocket.Core.Steam;
-using Rocket.Unturned.Chat;
-using Rocket.Unturned.Player;
 using System.Collections.Generic;
 using KevunsGameManager.Managers;
-using UnityEngine;
+using Rocket.API;
+using Rocket.Unturned.Chat;
+using Rocket.Unturned.Player;
 
 namespace KevunsGameManager.Commands
 {
     internal class ChangeGameCommad : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
-
         public string Name => "changegame";
-
         public string Help => "Change the game mode.";
-
         public string Syntax => "/changegame <mode>";
-
         public List<string> Aliases => new List<string>();
-
         public List<string> Permissions => new List<string>();
-
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = caller as UnturnedPlayer;

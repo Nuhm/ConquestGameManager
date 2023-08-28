@@ -1,13 +1,6 @@
-﻿using KevunsGameManager.Models;
+﻿using System.Collections.Generic;
+using KevunsGameManager.Models;
 using Rocket.API;
-using Rocket.Core.Logging;
-using Rocket.Core.Steam;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 
 namespace KevunsGameManager
 {

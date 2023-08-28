@@ -1,15 +1,11 @@
-﻿using KevunsGameManager.Models;
-using Rocket.Core.Steam;
+﻿using System;
+using System.Linq;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using Steamworks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
+using Random = System.Random;
 
 namespace KevunsGameManager.Managers
 {
@@ -58,7 +54,7 @@ namespace KevunsGameManager.Managers
 
                     if (availableLocations.Count > 0)
                     {
-                        var random = new System.Random();
+                        var random = new Random();
                         var randomLocation = availableLocations[random.Next(availableLocations.Count)];
 
                         player.Player.teleportToLocationUnsafe(new Vector3(randomLocation.LocationX, randomLocation.LocationY, randomLocation.LocationZ), angle);
@@ -76,7 +72,7 @@ namespace KevunsGameManager.Managers
 
                         if (leastRecentlyUsedLocations.Count > 0)
                         {
-                            var random = new System.Random();
+                            var random = new Random();
                             var randomLeastRecentlyUsedLocation = leastRecentlyUsedLocations[random.Next(leastRecentlyUsedLocations.Count)];
 
                             player.Player.teleportToLocationUnsafe(new Vector3(randomLeastRecentlyUsedLocation.LocationX, randomLeastRecentlyUsedLocation.LocationY, randomLeastRecentlyUsedLocation.LocationZ), angle);

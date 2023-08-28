@@ -1,14 +1,11 @@
-﻿using KevunsGameManager.Models;
-using MySql.Data.MySqlClient;
-using Rocket.Core.Logging;
-using Rocket.Core.Steam;
-using SDG.Unturned;
-using Steamworks;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
+using KevunsGameManager.Models;
+using MySql.Data.MySqlClient;
+using Rocket.Core.Logging;
+using Steamworks;
 
 namespace KevunsGameManager.Managers
 {
