@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KevunsGameManager.Models;
+using Rocket.API;
+using Rocket.Core;
 using Rocket.Core.Utils;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
+using Random = UnityEngine.Random;
+using Time = KevunsGameManager.Models.Time;
 
 namespace KevunsGameManager.Managers
 {
@@ -130,14 +134,12 @@ namespace KevunsGameManager.Managers
 
         private void SwitchToGameMode(int index)
         {
-            /*
             Map selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == currentMap);
             SetRandomTimeOfDay(selectedMap.TimeWeights);
-            */
+            
             gameModes[index].Start();
         }
         
-        /*
         private void SetRandomTimeOfDay(List<Time> timeWeights)
         {
             float totalWeight = timeWeights.Sum(time => time.Dawn + time.Day + time.Dusk + time.Night);
@@ -169,7 +171,6 @@ namespace KevunsGameManager.Managers
         {
             R.Commands.Execute(new ConsolePlayer(), $"/time {time}");
         }
-        */
         
         public bool ChangeGameMode(UnturnedPlayer player, string newMode)
         {
