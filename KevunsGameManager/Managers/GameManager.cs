@@ -18,6 +18,7 @@ namespace KevunsGameManager.Managers
         private List<GameMode> gameModes;
         private int currentGameModeIndex;
         public int currentMap;
+        private int previousGameModeIndex = -1;
         public List<UnturnedPlayer> ActivePlayers { get; } = new List<UnturnedPlayer>();
 
         private GameManager()
@@ -103,22 +104,72 @@ namespace KevunsGameManager.Managers
             }
             else
             {
-                // Handle the case where no maps are enabled
-                currentMap = 0; // Or some default value
+                currentMap = 0; // Fallback map
             }
-
-            // Choose a random game mode
-            int randomGameModeIndex = UnityEngine.Random.Range(0, gameModes.Count);
+    
+            // Choose a random game mode that is not the same as the previous one
+            int randomGameModeIndex = GetRandomNonRepeatingGameModeIndex();
             currentGameModeIndex = randomGameModeIndex;
 
             SwitchToGameMode(currentGameModeIndex);
+        }
+        
+        private int GetRandomNonRepeatingGameModeIndex()
+        {
+            int randomIndex;
+    
+            do
+            {
+                randomIndex = UnityEngine.Random.Range(0, gameModes.Count);
+            } while (randomIndex == previousGameModeIndex);
+    
+            previousGameModeIndex = randomIndex;
+            return randomIndex;
         }
 
 
         private void SwitchToGameMode(int index)
         {
+            /*
+            Map selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == currentMap);
+            SetRandomTimeOfDay(selectedMap.TimeWeights);
+            */
             gameModes[index].Start();
         }
+        
+        /*
+        private void SetRandomTimeOfDay(List<Time> timeWeights)
+        {
+            float totalWeight = timeWeights.Sum(time => time.Dawn + time.Day + time.Dusk + time.Night);
+            float randomValue = Random.Range(0f, totalWeight);
+
+            foreach (var time in timeWeights)
+            {
+                if (randomValue < time.Dawn)
+                {
+                    SetTimeOfDay(13000); // Dawn time
+                    break;
+                }
+                if (randomValue < time.Dawn + time.Day)
+                {
+                    SetTimeOfDay(5000); // Day time
+                    break;
+                }
+                if (randomValue < time.Dawn + time.Day + time.Dusk)
+                {
+                    SetTimeOfDay(17000); // Dusk time
+                    break;
+                }
+                SetTimeOfDay(24000); // Night time
+                break;
+            }
+        }
+
+        private void SetTimeOfDay(int time)
+        {
+            R.Commands.Execute(new ConsolePlayer(), $"/time {time}");
+        }
+        */
         
         public bool ChangeGameMode(UnturnedPlayer player, string newMode)
         {
@@ -174,7 +225,7 @@ namespace KevunsGameManager.Managers
     public class GameMode
     {
         public string Name { get; }
-        public TimeSpan Duration;
+        public TimeSpan Duration { get; }
         public bool IsFinished { get; private set; }
         private TimeSpan remainingTime;
         public TimeSpan RemainingTime => remainingTime;

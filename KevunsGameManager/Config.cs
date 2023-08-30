@@ -32,29 +32,39 @@ namespace KevunsGameManager
 
             Maps = new List<Map>
             {
-                new Map(1, "Test", 0, 40, new List<Location>
+                new Map(1, "Test", 0, 40, new List<Time>
+                {
+                    new Time(0.2f, 0.4f, 0.2f, 0.2f)
+                }, new List<Location>
                 {
                     new Location(1, false, 0, 0, 0),
                     new Location(2, false, 0, 0, 0),
-                    new Location(3, false, 0, 0, 0)
+                    new Location(3, false, 0, 0, 0),
                 }, true),
-                new Map(2, "Warehouse", 0, 40, new List<Location>
+                new Map(2, "Warehouse", 0, 40, new List<Time>
+                {
+                    new Time(0.2f, 0.4f, 0.2f, 0.2f)
+                }, new List<Location>
                 {
                     new Location(1, false, 0, 0, 0),
                     new Location(2, false, 0, 0, 0),
-                    new Location(3, false, 0, 0, 0)
+                    new Location(3, false, 0, 0, 0),
                 }, true),
-                new Map(3, "Bunker", 0, 40, new List<Location>
+                new Map(3, "Bunker", 0, 40, new List<Time>
+                {
+                    new Time(0.2f, 0.4f, 0.2f, 0.2f)
+                }, new List<Location>
                 {
                     new Location(1, false, 0, 0, 0),
                     new Location(2, false, 0, 0, 0),
-                    new Location(3, false, 0, 0, 0)
-                }, true)
+                    new Location(3, false, 0, 0, 0),
+                }, true),
             };
             Gamemodes = new List<Gamemode>
             {
                 new Gamemode
                 {
+                    ID = 0,
                     Name = "FFA",
                     Duration = 20,
                     HasTeams = false,
@@ -62,6 +72,7 @@ namespace KevunsGameManager
                 },
                 new Gamemode
                 {
+                    ID = 1,
                     Name = "TDM",
                     Duration = 20,
                     HasTeams = true,

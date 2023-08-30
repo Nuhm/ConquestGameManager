@@ -58,7 +58,7 @@ namespace KevunsGameManager.Managers
 
                         player.Player.teleportToLocationUnsafe(new Vector3(randomLocation.LocationX, randomLocation.LocationY, randomLocation.LocationZ), angle);
                         randomLocation.LastUsed = now;
-
+                        
                         if (Main.Instance.Configuration.Instance.LoggingEnabled)
                         {
                             Logger.Log($"Player respawn at spawn point {randomLocation.LocationID} on {map.MapName}.");

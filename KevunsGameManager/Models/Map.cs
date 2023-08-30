@@ -9,16 +9,18 @@ namespace KevunsGameManager.Models
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
 
+        public List<Time> TimeWeights { get; set; }
         public List<Location> Locations { get; set; }
         
         public bool IsEnabled { get; set; }
-
-        public Map(int mapID, string mapName, int minPlayers, int maxPlayers, List<Location> locations, bool isEnabled) 
+        
+        public Map(int mapID, string mapName, int minPlayers, int maxPlayers, List<Time> timeWeights, List<Location> locations, bool isEnabled) 
         {
             MapID = mapID;
             MapName = mapName;
             MinPlayers = minPlayers;
             MaxPlayers = maxPlayers;
+            TimeWeights = timeWeights;
             Locations = locations;
             IsEnabled = isEnabled;
         }
