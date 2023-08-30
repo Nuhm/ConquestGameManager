@@ -22,15 +22,24 @@ namespace KevunsGameManager.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var gamemodes = Main.Instance.Configuration.Instance.Gamemodes;
-
+            
             if (gamemodes.Count == 0)
             {
                 UnturnedChat.Say(caller, "No gamemodes available.");
                 return;
             }
+            
+            var enabledGamemodeNames = gamemodes
+                .Where(gamemode => gamemode.IsEnabled)
+                .Select(gamemode => gamemode.Name);
 
-            var gamemodeTypes = gamemodes.Select(gamemode => gamemode.Name);
-            var gamemodesMessage = "Available gamemodes: " + string.Join(", ", gamemodeTypes);
+            if (enabledGamemodeNames.Count() == 0)
+            {
+                UnturnedChat.Say(caller, "No enabled gamemodes available.");
+                return;
+            }
+
+            var gamemodesMessage = "Available gamemodes: " + string.Join(", ", enabledGamemodeNames);
             UnturnedChat.Say(caller, gamemodesMessage);
         }
     }
