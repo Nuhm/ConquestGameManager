@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KevunsGameManager.Models;
 using Rocket.Core.Utils;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -14,11 +15,9 @@ namespace KevunsGameManager.Managers
     {
         private static GameManager instance;
         public static GameManager Instance => instance ??= new GameManager();
-
         private List<GameMode> gameModes;
         private int currentGameModeIndex;
-        private const int GameModeLoopIncrement = 1;
-
+        public int currentMap;
         public List<UnturnedPlayer> ActivePlayers { get; } = new List<UnturnedPlayer>();
 
         private GameManager()
@@ -34,7 +33,7 @@ namespace KevunsGameManager.Managers
 
         public void Start()
         {
-            SwitchToGameMode(currentGameModeIndex);
+            SwitchToNextGameMode();
             Logger.Log("Started GAME!");
 
             isRunning = true;
@@ -94,9 +93,27 @@ namespace KevunsGameManager.Managers
 
         private void SwitchToNextGameMode()
         {
-            currentGameModeIndex = (currentGameModeIndex + GameModeLoopIncrement) % gameModes.Count;
+            // Choose a random enabled map
+            List<Map> enabledMaps = Main.Instance.Configuration.Instance.Maps.Where(map => map.IsEnabled).ToList();
+            if (enabledMaps.Count > 0)
+            {
+                int randomMapIndex = UnityEngine.Random.Range(0, enabledMaps.Count);
+                Map randomMap = enabledMaps[randomMapIndex];
+                currentMap = randomMap.MapID;
+            }
+            else
+            {
+                // Handle the case where no maps are enabled
+                currentMap = 0; // Or some default value
+            }
+
+            // Choose a random game mode
+            int randomGameModeIndex = UnityEngine.Random.Range(0, gameModes.Count);
+            currentGameModeIndex = randomGameModeIndex;
+
             SwitchToGameMode(currentGameModeIndex);
         }
+
 
         private void SwitchToGameMode(int index)
         {
@@ -157,13 +174,10 @@ namespace KevunsGameManager.Managers
     public class GameMode
     {
         public string Name { get; }
-        public TimeSpan Duration { get; }
+        public TimeSpan Duration;
         public bool IsFinished { get; private set; }
-
         private TimeSpan remainingTime;
-        
         public TimeSpan RemainingTime => remainingTime;
-
         private TimeSpan initialDuration;
 
         public GameMode(string name, TimeSpan duration)

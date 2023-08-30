@@ -31,7 +31,6 @@ namespace KevunsGameManager.Managers
 
         public void RespawnPlayer(UnturnedPlayer player)
         {
-            var currentMap = 1; // Example: Get the current map ID
             byte angle = 0;
             
             var remainingTime = GameManager.Instance.GetRemainingTime();
@@ -39,7 +38,7 @@ namespace KevunsGameManager.Managers
 
             if (GameManager.Instance.ActivePlayers.Contains(player) && remainingSeconds > Main.Instance.Configuration.Instance.RespawnLimitSeconds)
             {  
-                var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == currentMap);
+                var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == GameManager.Instance.currentMap);
                 if (map != null)
                 {
                     var cooldownDuration = TimeSpan.FromSeconds(Main.Instance.Configuration.Instance.CooldownDurationSeconds);
