@@ -41,6 +41,7 @@ namespace KevunsGameManager.Commands
 
             GameManager.Instance.PlayerJoinedGame(player);
 
+            TeamManager.Instance.GroupPlayer(player);
             SpawnManager.Instance.RespawnPlayer(player);
             UnturnedChat.Say(caller, "Deployed to game");
         }

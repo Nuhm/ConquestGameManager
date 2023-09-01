@@ -87,23 +87,6 @@ namespace KevunsGameManager.Managers
                             Utility.Say(player, "No least recently used locations available.");
                         }
                     }
-
-                    /*
-                     * Area should be change so that it applys the correct group for the two teams if there is two
-                     * For now will just be using groups to show if player is active or not for lobby testing
-                     */
-
-                    var steamGroupId = (CSteamID)2;
-                    var group = GroupManager.getOrAddGroup(steamGroupId, "Active Players Group", out var wasCreated);
-
-                    if (!wasCreated)
-                    {
-                        group.name = "Active Players Group";
-                        GroupManager.sendGroupInfo(group);
-                    }
-
-                    player.Player.quests.ServerAssignToGroup(steamGroupId, EPlayerGroupRank.MEMBER, true);
-
                 }
                 else
                 {

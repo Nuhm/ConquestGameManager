@@ -19,8 +19,8 @@ namespace KevunsGameManager.Managers
     {
         private static GameManager instance;
         public static GameManager Instance => instance ??= new GameManager();
-        private List<GameMode> gameModes;
-        private int currentGameModeIndex;
+        public List<GameMode> gameModes;
+        public int currentGameModeIndex;
         public int currentMap;
         private int previousGameModeIndex = -1;
         public List<UnturnedPlayer> ActivePlayers { get; } = new List<UnturnedPlayer>();
@@ -102,7 +102,7 @@ namespace KevunsGameManager.Managers
             List<Map> enabledMaps = Main.Instance.Configuration.Instance.Maps.Where(map => map.IsEnabled).ToList();
             if (enabledMaps.Count > 0)
             {
-                int randomMapIndex = UnityEngine.Random.Range(0, enabledMaps.Count);
+                int randomMapIndex = Random.Range(0, enabledMaps.Count);
                 Map randomMap = enabledMaps[randomMapIndex];
                 currentMap = randomMap.MapID;
             }
@@ -124,7 +124,7 @@ namespace KevunsGameManager.Managers
     
             do
             {
-                randomIndex = UnityEngine.Random.Range(0, gameModes.Count);
+                randomIndex = Random.Range(0, gameModes.Count);
             } while (randomIndex == previousGameModeIndex);
     
             previousGameModeIndex = randomIndex;
@@ -226,7 +226,6 @@ namespace KevunsGameManager.Managers
     public class GameMode
     {
         public string Name { get; }
-        public TimeSpan Duration { get; }
         public bool IsFinished { get; private set; }
         private TimeSpan remainingTime;
         public TimeSpan RemainingTime => remainingTime;
@@ -236,7 +235,6 @@ namespace KevunsGameManager.Managers
         {
             Name = name;
             initialDuration = duration; // Store the initial duration
-            Duration = duration;
             remainingTime = duration;
         }
 
@@ -281,7 +279,7 @@ namespace KevunsGameManager.Managers
                 Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds}");
             }
 
-            if (remainingSeconds >= 1 && remainingSeconds <= 30)
+            if (remainingSeconds is >= 1 and <= 30)
             {
                 List<int> countdownThresholds = new List<int> { 30, 10, 5, 4, 3, 2, 1 };
                 if (countdownThresholds.Contains((int)remainingSeconds))
