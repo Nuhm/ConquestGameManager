@@ -6,26 +6,19 @@ namespace KevunsGameManager.Models
     public class GamePlayer
     {
         public CSteamID SteamID { get; set; }
-
         public string Username { get; set; }
-
         public DateTime FirstJoined { get; set; }
-
         public DateTime LastJoined { get; set; }
-
-
+        
         public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
             SteamID = steamID;
-
             Username = username;
-
             FirstJoined = firstJoined;
-
             LastJoined = lastJoined;
         }
 
-        public void UpdateValue(string coloumnName, int id)
+        public void UpdateValue(string coloumnName, int value)
         {
             switch (coloumnName.ToLower())
             {
