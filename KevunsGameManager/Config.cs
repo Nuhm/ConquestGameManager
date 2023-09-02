@@ -20,6 +20,8 @@ namespace KevunsGameManager
         
         public int DeployLimitSeconds { get; set; }
         public int RespawnLimitSeconds { get; set; }
+        public string DeployWebhook { get; set; }
+        public string GameInfoWebhook { get; set; }
 
         public void LoadDefaults()
         {
@@ -81,6 +83,8 @@ namespace KevunsGameManager
             };
             DeployLimitSeconds = 10;
             RespawnLimitSeconds = 10;
+            DeployWebhook = "";
+            GameInfoWebhook = "";
         }
     }
 }

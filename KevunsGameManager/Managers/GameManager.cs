@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using KevunsGameManager.Models;
+using KevunsGameManager.Webhook;
 using Rocket.API;
 using Rocket.Core;
 using Rocket.Core.Utils;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
+using SDG.Unturned;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 using Random = UnityEngine.Random;
@@ -182,7 +185,7 @@ namespace KevunsGameManager.Managers
             }
     
             gameModes[currentGameModeIndex].Stop();
-
+            
             ReturnToLobby();
             SwitchToGameMode(newModeIndex);
     
@@ -208,6 +211,18 @@ namespace KevunsGameManager.Managers
             {
                 ActivePlayers.Add(player);
                 Logger.Log($"{player} joined game");
+                
+                ThreadPool.QueueUserWorkItem((o) =>
+                {
+                    Embed embed = new Embed(null, $"**{player.SteamName}** deployed to the game", null, "3066993", DateTime.UtcNow.ToString("s"),
+                        new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                        new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
+                        new Field[]
+                        {
+                        },
+                        null, null);
+                    DiscordManager.SendEmbed(embed, "Deployed to game", Main.Instance.Configuration.Instance.DeployWebhook);
+                });
             }
         }
 
@@ -217,6 +232,18 @@ namespace KevunsGameManager.Managers
             {
                 ActivePlayers.Remove(player);
                 Logger.Log($"{player} left game");
+                
+                ThreadPool.QueueUserWorkItem((o) =>
+                {
+                    Embed embed = new Embed(null, $"**{player.SteamName}** returned to the lobby", null, "3066993", DateTime.UtcNow.ToString("s"),
+                        new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                        new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
+                        new Field[]
+                        {
+                        },
+                        null, null);
+                    DiscordManager.SendEmbed(embed, "Returned to lobby", Main.Instance.Configuration.Instance.DeployWebhook);
+                });
             }
         }
 
@@ -242,6 +269,23 @@ namespace KevunsGameManager.Managers
         {
             remainingTime = initialDuration;
             IsFinished = false;
+            
+            ThreadPool.QueueUserWorkItem((o) =>
+            {
+                Map selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == GameManager.Instance.currentMap);
+                
+                Embed embed = new Embed(null, $"**A {GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has started!", null, "3066993", DateTime.UtcNow.ToString("s"),
+                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                    new Author(null, null, null),
+                    new Field[]
+                    {
+                        new Field("**Gamemode:**", $"{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}", true),
+                        new Field("**Map:**", $"{selectedMap.MapName}", true),
+                        new Field("**Duration:**", $"{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].initialDuration}", true)
+                    },
+                    null, null);
+                DiscordManager.SendEmbed(embed, "Game Started", Main.Instance.Configuration.Instance.GameInfoWebhook);
+            });
 
             // Start the update loop in a separate task
             Task.Run(async () =>
@@ -256,6 +300,18 @@ namespace KevunsGameManager.Managers
 
         public void Stop()
         {
+            ThreadPool.QueueUserWorkItem((o) =>
+            {
+                Embed embed = new Embed(null, $"**A {GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has ended!", null, "3066993", DateTime.UtcNow.ToString("s"),
+                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                    new Author(null, null, null),
+                    new Field[]
+                    {
+                    },
+                    null, null);
+                DiscordManager.SendEmbed(embed, "Game Ended", Main.Instance.Configuration.Instance.GameInfoWebhook);
+            });
+            
             IsFinished = true;
         }
         

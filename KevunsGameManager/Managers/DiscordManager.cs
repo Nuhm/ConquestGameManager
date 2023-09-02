@@ -7,13 +7,13 @@ namespace KevunsGameManager.Managers
 {
     public class DiscordManager
     {
-        public void SendEmbed(Embed embed, string name, string webhookurl)
+        public static void SendEmbed(Embed embed, string name, string webhookurl)
         {
             Message webhookMessage = new Message(name, null, new Embed[1] { embed });
             SendHook(webhookMessage, webhookurl);
         }
 
-        public void SendHook(Message embed, string webhookUrl)
+        public static void SendHook(Message embed, string webhookUrl)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(embed));
             using (WebClient webClient = new WebClient())
