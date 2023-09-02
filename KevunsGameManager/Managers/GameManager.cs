@@ -62,6 +62,20 @@ namespace KevunsGameManager.Managers
 
             if (gameModes[currentGameModeIndex].IsFinished)
             {
+                ThreadPool.QueueUserWorkItem((o) =>
+                {
+                    Embed embed = new Embed(null, $"A **{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has ended!", null, "16714764", DateTime.UtcNow.ToString("s"),
+                        new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                        new Author(null, null, null),
+                        new Field[]
+                        {
+                        },
+                        null, null);
+                    DiscordManager.SendEmbed(embed, "Game Ended", Main.Instance.Configuration.Instance.GameInfoWebhook);
+                });
+            
+                // Send game summary webhook here
+                
                 TaskDispatcher.QueueOnMainThread( () =>
                     {
                         ReturnToLobby();
@@ -214,7 +228,7 @@ namespace KevunsGameManager.Managers
                 
                 ThreadPool.QueueUserWorkItem((o) =>
                 {
-                    Embed embed = new Embed(null, $"**{player.SteamName}** deployed to the game", null, "3066993", DateTime.UtcNow.ToString("s"),
+                    Embed embed = new Embed(null, $"**{player.SteamName}** deployed to the game", null, "16714764", DateTime.UtcNow.ToString("s"),
                         new Footer(Provider.serverName, Provider.configData.Browser.Icon),
                         new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
                         new Field[]
@@ -235,7 +249,7 @@ namespace KevunsGameManager.Managers
                 
                 ThreadPool.QueueUserWorkItem((o) =>
                 {
-                    Embed embed = new Embed(null, $"**{player.SteamName}** returned to the lobby", null, "3066993", DateTime.UtcNow.ToString("s"),
+                    Embed embed = new Embed(null, $"**{player.SteamName}** returned to the lobby", null, "16714764", DateTime.UtcNow.ToString("s"),
                         new Footer(Provider.serverName, Provider.configData.Browser.Icon),
                         new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
                         new Field[]
@@ -274,7 +288,7 @@ namespace KevunsGameManager.Managers
             {
                 Map selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == GameManager.Instance.currentMap);
                 
-                Embed embed = new Embed(null, $"**A {GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has started!", null, "3066993", DateTime.UtcNow.ToString("s"),
+                Embed embed = new Embed(null, $"A **{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has started!", null, "16714764", DateTime.UtcNow.ToString("s"),
                     new Footer(Provider.serverName, Provider.configData.Browser.Icon),
                     new Author(null, null, null),
                     new Field[]
@@ -300,18 +314,6 @@ namespace KevunsGameManager.Managers
 
         public void Stop()
         {
-            ThreadPool.QueueUserWorkItem((o) =>
-            {
-                Embed embed = new Embed(null, $"**A {GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has ended!", null, "3066993", DateTime.UtcNow.ToString("s"),
-                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
-                    new Author(null, null, null),
-                    new Field[]
-                    {
-                    },
-                    null, null);
-                DiscordManager.SendEmbed(embed, "Game Ended", Main.Instance.Configuration.Instance.GameInfoWebhook);
-            });
-            
             IsFinished = true;
         }
         

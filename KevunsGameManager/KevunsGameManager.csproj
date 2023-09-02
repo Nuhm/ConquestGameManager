@@ -35,11 +35,13 @@
   <ItemGroup>
     <Compile Include="Commands\ChangeGameCommand.cs" />
     <Compile Include="Commands\DeployCommand.cs" />
+    <Compile Include="Commands\DiscordCommand.cs" />
     <Compile Include="Commands\GamemodesCommand.cs" />
     <Compile Include="Commands\LobbyCommand.cs" />
     <Compile Include="Commands\MapsCommand.cs" />
     <Compile Include="Commands\SetLobbyCommand.cs" />
     <Compile Include="Commands\SetSpawnCommand.cs" />
+    <Compile Include="Commands\SudoCommand.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Managers\DatabaseManager.cs" />
