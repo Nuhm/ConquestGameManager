@@ -89,22 +89,24 @@ namespace KevunsGameManager
 
         private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {
-            // Get the killer's in-game name
             var killerPlayer = UnturnedPlayer.FromCSteamID(murderer);
             var killerName = killerPlayer != null ? killerPlayer.DisplayName : "Unknown";
             
-            // Calculate the distance between killer and victim
             if (killerPlayer == null) return;
             
-            // Determine the weapon type based on the death cause
+            var wasHeadshot = limb == ELimb.SKULL;
+            
             var causeType = GetCauseType(cause);
             var limbType = GetLimbType(limb);
             var weaponType = GetWeaponType(killerPlayer);
             
             var distance = Vector3.Distance(player.Position, killerPlayer.Position);
             
-            ThreadPool.QueueUserWorkItem((o) =>
+            ThreadPool.QueueUserWorkItem(async (o) =>
             {
+                await Instance.DatabaseManager.UpdateDeathCountAsync(player);
+                await Instance.DatabaseManager.UpdateKillCountAsync(killerPlayer, wasHeadshot);
+                
                 var embed = new Embed(null, $"**{player.DisplayName}** was killed by **{killerName}**!", null, "16714764", DateTime.UtcNow.ToString("s"),
                     new Footer(Provider.serverName, Provider.configData.Browser.Icon),
                     new Author(null, null, null),
@@ -179,6 +181,7 @@ namespace KevunsGameManager
             }
             return "Unknown";
         }
+        
         private static void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
             SpawnManager.Instance.RespawnPlayer(player);

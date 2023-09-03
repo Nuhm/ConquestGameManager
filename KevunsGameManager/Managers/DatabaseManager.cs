@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using KevunsGameManager.Models;
 using MySql.Data.MySqlClient;
 using Rocket.Core.Logging;
+using Rocket.Unturned.Player;
 using Steamworks;
 
 namespace KevunsGameManager.Managers
@@ -158,6 +159,55 @@ namespace KevunsGameManager.Managers
             catch (Exception ex)
             {
                 Logger.Log($"Error changing time of {steamID} for column {columnName} to {dateTime}");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
+        
+        public async Task UpdateDeathCountAsync(UnturnedPlayer player)
+        {
+            using MySqlConnection conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "UPDATE `GamePlayerStats` SET `Deaths` = `Deaths` + 1, `KDR` = IF(`Deaths` = 0, `Kills`, `Kills` / `Deaths`) WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", player.CSteamID.ToString());
+                await comm.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error updating death count for {player.DisplayName} in the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
+
+        public async Task UpdateKillCountAsync(UnturnedPlayer player, bool wasHeadshot)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                var query = wasHeadshot
+                    ? "UPDATE `GamePlayerStats` SET `Kills` = `Kills` + 1, `Headshots` = `Headshots` + 1, `KDR` = IF(`Deaths` = 0, `Kills`, `Kills` / `Deaths`), `Headshot Accuracy` = `Headshots` / `Kills` WHERE `SteamID` = @steamID;"
+                    : "UPDATE `GamePlayerStats` SET `Kills` = `Kills` + 1, `KDR` = IF(`Deaths` = 0, `Kills`, `Kills` / `Deaths`), `Headshot Accuracy` = `Headshots` / `Kills` WHERE `SteamID` = @steamID;";
+
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", player.CSteamID.ToString());
+                await comm.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error updating kill count for {player.DisplayName} in the database!");
                 Logger.Log(ex);
             }
             finally
