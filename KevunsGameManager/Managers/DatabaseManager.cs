@@ -13,7 +13,7 @@ namespace KevunsGameManager.Managers
     {
         private string ConnectionString { get; set; }
         public List<GamePlayer> Data { get; set; }
-        public List<PlayerStats> StatsData { get; set; }
+        private List<PlayerStats> StatsData { get; set; }
 
         public DatabaseManager() 
         { 
@@ -145,17 +145,14 @@ namespace KevunsGameManager.Managers
             try
             {
                 await conn.OpenAsync();
-                MySqlCommand comm = new MySqlCommand($"UPDATE `GamePlayerInfo` SET `{columnName}` = @date WHERE `SteamID` = {steamID};", conn);
+                var comm = new MySqlCommand($"UPDATE `GamePlayerInfo` SET `{columnName}` = @date WHERE `SteamID` = {steamID};", conn);
                 comm.Parameters.AddWithValue("@date", dateTime);
                 await comm.ExecuteScalarAsync();
 
                 lock (Data)
                 {
                     GamePlayer data = Data.FirstOrDefault(k => k.SteamID == steamID);
-                    if (data != null)
-                    {
-                        data.UpdateDateTime(columnName, dateTime);
-                    }
+                    data?.UpdateDateTime(columnName, dateTime);
                 }
             }
             catch (Exception ex)
@@ -168,7 +165,48 @@ namespace KevunsGameManager.Managers
                 await conn.CloseAsync();
             }
         }
+        
+        public async Task<PlayerStats> GetPlayerStatsAsync(CSteamID steamID)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
 
+                // Query the database to get player stats based on the player's SteamID
+                const string query = "SELECT * FROM `GamePlayerStats` WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", steamID.ToString()); // Convert SteamID to string
+
+                using var reader = await comm.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    // Parse the retrieved data and create a PlayerStats object
+                    var username = reader["Username"].ToString(); // You can retrieve the username if needed
+                    var kills = Convert.ToInt32(reader["Kills"]);
+                    var deaths = Convert.ToInt32(reader["Deaths"]);
+                    var kdr = Convert.ToDouble(reader["KDR"]);
+                    var headshots = Convert.ToInt32(reader["Headshots"]);
+                    var headshotAccuracy = Convert.ToDouble(reader["Headshot Accuracy"]);
+
+                    var playerStats = new PlayerStats(steamID, username, kills, deaths, kdr, headshots, headshotAccuracy);
+                    return playerStats;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error fetching player stats for {steamID} from the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+            return null;
+        }
+
+        
         private void CacheGet()
         {
             using MySqlConnection conn = new MySqlConnection(ConnectionString);
