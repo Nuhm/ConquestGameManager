@@ -206,6 +206,43 @@ namespace KevunsGameManager.Managers
             return null;
         }
 
+        public async Task<List<PlayerStats>> GetTopPlayersByKillsAsync(int playersPerPage, int startIndex)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+                const string query = "SELECT * FROM `GamePlayerStats` ORDER BY `Kills` DESC LIMIT @startIndex, @playersPerPage;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@startIndex", startIndex);
+                comm.Parameters.AddWithValue("@playersPerPage", playersPerPage);
+
+                using var reader = await comm.ExecuteReaderAsync();
+                var topPlayers = new List<PlayerStats>();
+
+                while (await reader.ReadAsync())
+                {
+                    var steamID = new CSteamID(Convert.ToUInt64(reader["SteamID"]));
+                    var username = reader["Username"].ToString();
+                    var kills = Convert.ToInt32(reader["Kills"]);
+
+                    var playerStats = new PlayerStats(steamID, username, kills, 0, 0.0, 0, 0.0);
+                    topPlayers.Add(playerStats);
+                }
+                return topPlayers;
+            }
+            catch (Exception ex)
+            {
+                Logger.Log("Error fetching top players by kills from the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+            return null;
+        }
+
         
         private void CacheGet()
         {

@@ -37,6 +37,7 @@
     <Compile Include="Commands\DeployCommand.cs" />
     <Compile Include="Commands\DiscordCommand.cs" />
     <Compile Include="Commands\GamemodesCommand.cs" />
+    <Compile Include="Commands\LeaderboardCommand.cs" />
     <Compile Include="Commands\LobbyCommand.cs" />
     <Compile Include="Commands\MapsCommand.cs" />
     <Compile Include="Commands\SetLobbyCommand.cs" />
