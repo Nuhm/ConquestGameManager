@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using HarmonyLib;
 using KevunsGameManager.Managers;
 using KevunsGameManager.Models;
+using KevunsGameManager.Webhook;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
 using Rocket.Core.Utils;
@@ -11,6 +13,7 @@ using Rocket.Unturned;
 using Rocket.Unturned.Events;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using Steamworks;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 
@@ -28,7 +31,7 @@ namespace KevunsGameManager
             
             U.Events.OnPlayerConnected += EventOnConnect;
             U.Events.OnPlayerDisconnected += EventOnDisconnect;
-            UnturnedPlayerEvents.OnPlayerDead += EventOnDeath;
+            UnturnedPlayerEvents.OnPlayerDeath += EventOnDeath;
             UnturnedPlayerEvents.OnPlayerRevive += EventOnRevive;
 
             Harmony harmony = new Harmony("KevunsGameManager");
@@ -48,7 +51,7 @@ namespace KevunsGameManager
 
             U.Events.OnPlayerConnected -= EventOnConnect;
             U.Events.OnPlayerDisconnected -= EventOnDisconnect;
-            UnturnedPlayerEvents.OnPlayerDead -= EventOnDeath;
+            UnturnedPlayerEvents.OnPlayerDeath -= EventOnDeath;
             UnturnedPlayerEvents.OnPlayerRevive -= EventOnRevive;
 
             foreach (var player in Provider.clients)
@@ -59,7 +62,7 @@ namespace KevunsGameManager
             Logger.Log("KevunsGameManager has been unloaded");
         }
 
-        private void OnLevelLoaded(int level)
+        private static void OnLevelLoaded(int level)
         {
             GameManager.Instance.Start();
             Logger.Log("Started GameManager");
@@ -84,17 +87,104 @@ namespace KevunsGameManager
             DatabaseManager.ChangeLastJoin(player.CSteamID, DateTime.UtcNow);
         }
 
-        private void EventOnDeath(UnturnedPlayer player, Vector3 position)
+        private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {
-
+            // Get the killer's in-game name
+            var killerPlayer = UnturnedPlayer.FromCSteamID(murderer);
+            var killerName = killerPlayer != null ? killerPlayer.DisplayName : "Unknown";
+            
+            // Calculate the distance between killer and victim
+            if (killerPlayer == null) return;
+            
+            // Determine the weapon type based on the death cause
+            var causeType = GetCauseType(cause);
+            var limbType = GetLimbType(limb);
+            var weaponType = GetWeaponType(killerPlayer);
+            
+            var distance = Vector3.Distance(player.Position, killerPlayer.Position);
+            
+            ThreadPool.QueueUserWorkItem((o) =>
+            {
+                var embed = new Embed(null, $"**{player.DisplayName}** was killed by **{killerName}**!", null, "16714764", DateTime.UtcNow.ToString("s"),
+                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                    new Author(null, null, null),
+                    new[]
+                    {
+                        new Field("**Player:**", $"[**{player.DisplayName}**](https://steamcommunity.com/profiles/{player.CSteamID}/)", true),
+                        new Field("**Killer:**", $"[**{killerName}**](https://steamcommunity.com/profiles/{murderer}/)", true),
+                        new Field("**Cause:**", $"{causeType}", true),
+                        new Field("**Limb:**", $"{limbType}", true),
+                        new Field("**Weapon:**", $"{weaponType}", true),
+                        new Field("**Distance:**", $"{distance}", true)
+                    },
+                    null, null);
+                DiscordManager.SendEmbed(embed, "Death", Main.Instance.Configuration.Instance.GameInfoWebhook);
+            });
+                
+            Logger.Log($"{player.DisplayName} was killed by {killerName} using a {weaponType} at a distance of {distance:F2} meters.");
         }
 
-        private void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
+        private static readonly Dictionary<ELimb, string> LimbTypeMap = new()
+        {
+            { ELimb.SKULL, "Head" },
+            { ELimb.SPINE, "Torso" },
+            { ELimb.LEFT_FRONT, "Torso" },
+            { ELimb.RIGHT_FRONT, "Torso" },
+            { ELimb.LEFT_BACK, "Torso" },
+            { ELimb.RIGHT_BACK, "Torso" },
+            { ELimb.LEFT_ARM, "Arm" },
+            { ELimb.RIGHT_ARM, "Arm" },
+            { ELimb.LEFT_LEG, "Leg" },
+            { ELimb.RIGHT_LEG, "Leg" },
+            { ELimb.LEFT_HAND, "Hand" },
+            { ELimb.RIGHT_HAND, "Hand" },
+            { ELimb.LEFT_FOOT, "Foot" },
+            { ELimb.RIGHT_FOOT, "Foot" },
+        };
+
+        private static readonly Dictionary<EDeathCause, string> CauseTypeMap = new()
+        {
+            { EDeathCause.GUN, "Gun" },
+            { EDeathCause.SUICIDE, "Suicide" },
+            { EDeathCause.MELEE, "Melee Weapon" },
+            { EDeathCause.PUNCH, "Fist" },
+            { EDeathCause.FOOD, "Hunter" },
+            { EDeathCause.KILL, "Admin" },
+            { EDeathCause.SHRED, "Shredding" },
+            { EDeathCause.WATER, "Thirst" },
+            { EDeathCause.BREATH, "Suffocation" },
+            { EDeathCause.BURNER, "Burning" },
+            { EDeathCause.CHARGE, "Explosives" },
+            { EDeathCause.GRENADE, "Grenade" },
+            { EDeathCause.MISSILE, "Missile" },
+            { EDeathCause.VEHICLE, "Vehicle" },
+            { EDeathCause.INFECTION, "Infection" },
+        };
+
+        private static string GetLimbType(ELimb limb)
+        {
+            return LimbTypeMap.TryGetValue(limb, out var limbType) ? limbType : "Unknown";
+        }
+
+        private static string GetCauseType(EDeathCause cause)
+        {
+            return CauseTypeMap.TryGetValue(cause, out var causeType) ? causeType : "Unknown";
+        }
+
+        private static string GetWeaponType(UnturnedPlayer killerPlayer)
+        {
+            if (killerPlayer != null && killerPlayer.Player != null && killerPlayer.Player.equipment != null && killerPlayer.Player.equipment.asset != null)
+            {
+                return killerPlayer.Player.equipment.asset.itemName;
+            }
+            return "Unknown";
+        }
+        private static void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
             SpawnManager.Instance.RespawnPlayer(player);
         }
 
-        public override TranslationList DefaultTranslations => new TranslationList()
+        public override TranslationList DefaultTranslations => new()
         {
             { "Player_Connected", "[color=green]{0} has connected to the server[/color]" },
             { "Player_Disconnected", "[color=green]{0} has disconnected from the server[/color]" },
@@ -105,7 +195,6 @@ namespace KevunsGameManager
         };
 
         public DatabaseManager DatabaseManager { get; set; }
-        public GameManager GameManager { get; set; }
-        public static Main Instance { get; set; }
+        public static Main Instance { get; private set; }
     }
 }
