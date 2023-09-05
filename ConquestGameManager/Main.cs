@@ -34,7 +34,7 @@ namespace ConquestGameManager
             UnturnedPlayerEvents.OnPlayerDeath += EventOnDeath;
             UnturnedPlayerEvents.OnPlayerRevive += EventOnRevive;
 
-            Harmony harmony = new Harmony("ConquestGameManager");
+            var harmony = new Harmony("ConquestGameManager");
             harmony.PatchAll(Assembly);
 
             Logger.Log($"Loaded {Configuration.Instance.Maps.Count} maps");
@@ -76,16 +76,27 @@ namespace ConquestGameManager
 
                 TaskDispatcher.QueueOnMainThread(() =>
                 {
-                    GamePlayer gPlayer = DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
+                    var gPlayer = DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
                 });
             });
+            DatabaseManager.StartPlaytimeTracking(player.CSteamID);;
             SpawnManager.Instance.RespawnPlayer(player);
         }
 
-        private void EventOnDisconnect(UnturnedPlayer player)
+        private async void EventOnDisconnect(UnturnedPlayer player)
         {
+            if (DatabaseManager.PlaytimeTracker.ContainsKey(player.CSteamID))
+            {
+                var playtimeSeconds = DatabaseManager.PlaytimeTracker[player.CSteamID];
+        
+                await DatabaseManager.UpdatePlaytimeAsync(player.CSteamID, playtimeSeconds);
+        
+                DatabaseManager.PlaytimeTracker.Remove(player.CSteamID);
+            }
+    
             DatabaseManager.ChangeLastJoin(player.CSteamID, DateTime.UtcNow);
         }
+
 
         private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {

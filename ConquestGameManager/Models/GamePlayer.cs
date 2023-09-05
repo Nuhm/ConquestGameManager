@@ -9,6 +9,7 @@ namespace ConquestGameManager.Models
         public string Username { get; set; }
         public DateTime FirstJoined { get; set; }
         public DateTime LastJoined { get; set; }
+        public int Playtime { get; set; }
         
         public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
@@ -16,9 +17,10 @@ namespace ConquestGameManager.Models
             Username = username;
             FirstJoined = firstJoined;
             LastJoined = lastJoined;
+            Playtime = 0;
         }
 
-        public void UpdateValue(string coloumnName, int value)
+        public static void UpdateValue(string coloumnName, int value)
         {
             switch (coloumnName.ToLower())
             {

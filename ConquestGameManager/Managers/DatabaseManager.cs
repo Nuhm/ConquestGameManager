@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ConquestGameManager.Models;
 using MySql.Data.MySqlClient;
@@ -12,9 +13,11 @@ namespace ConquestGameManager.Managers
 {
     public class DatabaseManager
     {
-        private string ConnectionString { get; set; }
+        private static string ConnectionString { get; set; }
         public List<GamePlayer> Data { get; set; }
         private List<PlayerStats> StatsData { get; set; }
+        public readonly Dictionary<CSteamID, int> PlaytimeTracker = new Dictionary<CSteamID, int>();
+
 
         public DatabaseManager() 
         { 
@@ -31,11 +34,11 @@ namespace ConquestGameManager.Managers
 
         private async Task InitiateDatabaseAsync()
         {
-            using MySqlConnection conn = new MySqlConnection(ConnectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             try
             {
                 await conn.OpenAsync();
-                await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
+                await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , `Play Time` INT NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
                 await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerStats` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Kills` INT NOT NULL , `Deaths` INT NOT NULL , `KDR` DOUBLE NOT NULL , `Headshots` INT NOT NULL , `Headshot Accuracy` DOUBLE NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
             }
             catch (Exception ex)
@@ -51,12 +54,12 @@ namespace ConquestGameManager.Managers
 
         public async Task AddPlayerAsync(CSteamID steamID, string username)
         {
-            using (MySqlConnection conn = new MySqlConnection(ConnectionString))
+            using (var conn = new MySqlConnection(ConnectionString))
             {
                 try
                 {
                     await conn.OpenAsync();
-                    MySqlCommand comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerInfo` (`SteamID`, `Username`, `First Joined`, `Last Joined`) VALUES ({steamID}, '{username}', @date, @date);", conn);
+                    var comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerInfo` (`SteamID`, `Username`, `First Joined`, `Last Joined`, `Playtime`) VALUES ({steamID}, '{username}', @date, @date, 0);", conn);
                     comm.Parameters.AddWithValue("@date", DateTime.UtcNow);
                     await comm.ExecuteScalarAsync();
 
@@ -79,7 +82,7 @@ namespace ConquestGameManager.Managers
                 }
             }
             
-            using (MySqlConnection conn = new MySqlConnection(ConnectionString))
+            using (var conn = new MySqlConnection(ConnectionString))
             {
                 try
                 {
@@ -109,7 +112,7 @@ namespace ConquestGameManager.Managers
 
         public async Task SetColumnValueAsync(CSteamID steamID, int id, string columnName)
         {
-            using MySqlConnection conn = new MySqlConnection(ConnectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             try
             {
                 await conn.OpenAsync();
@@ -120,7 +123,7 @@ namespace ConquestGameManager.Managers
                     GamePlayer data = Data.FirstOrDefault(k => k.SteamID == steamID);
                     if (data != null)
                     {
-                        data.UpdateValue(columnName, id);
+                        GamePlayer.UpdateValue(columnName, id);
                     }
                 }
             }
@@ -135,6 +138,89 @@ namespace ConquestGameManager.Managers
             }
         }
 
+        public void StartPlaytimeTracking(CSteamID steamID)
+        {
+            if (!PlaytimeTracker.ContainsKey(steamID))
+            {
+                PlaytimeTracker.Add(steamID, 0);
+            }
+
+            var playtimeTimer = new Timer(Callback, null, 1000, 1000);
+            return;
+
+            void Callback(object state)
+            {
+                if (PlaytimeTracker.ContainsKey(steamID))
+                {
+                    PlaytimeTracker[steamID]++;
+                }
+            }
+        }
+
+        public int GetCurrentPlaytime(CSteamID steamID)
+        {
+            return PlaytimeTracker.TryGetValue(steamID, out var currentPlaytime) ? currentPlaytime : 0;
+        }
+
+        
+        public async Task UpdatePlaytimeAsync(CSteamID steamID, int playtimeSeconds)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await new MySqlCommand($"UPDATE `GamePlayerInfo` SET `Playtime` = `Playtime` + {playtimeSeconds} WHERE `SteamID` = {steamID};", conn).ExecuteScalarAsync();
+
+                lock (Data)
+                {
+                    var data = Data.FirstOrDefault(k => k.SteamID == steamID);
+                    if (data != null)
+                    {
+                        data.Playtime += playtimeSeconds;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error updating playtime for {steamID} in the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
+        
+        public static async Task<int> GetPlaytimeAsync(CSteamID steamID)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "SELECT `PlayTime` FROM `GamePlayerInfo` WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", steamID.ToString());
+
+                var playtime = await comm.ExecuteScalarAsync();
+                if (playtime != null && int.TryParse(playtime.ToString(), out int playtimeSeconds))
+                {
+                    return playtimeSeconds;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error fetching playtime for {steamID} from the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return 0;
+        }
+        
         public void ChangeLastJoin(CSteamID steamID, DateTime time)
         {
             Task.Run(async () => await SetDateTimeAsync(steamID, time, "Last Joined"));
@@ -142,7 +228,7 @@ namespace ConquestGameManager.Managers
 
         private async Task SetDateTimeAsync(CSteamID steamID, DateTime dateTime, string columnName)
         {
-            using MySqlConnection conn = new MySqlConnection(ConnectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             try
             {
                 await conn.OpenAsync();
@@ -152,7 +238,7 @@ namespace ConquestGameManager.Managers
 
                 lock (Data)
                 {
-                    GamePlayer data = Data.FirstOrDefault(k => k.SteamID == steamID);
+                    var data = Data.FirstOrDefault(k => k.SteamID == steamID);
                     data?.UpdateDateTime(columnName, dateTime);
                 }
             }
@@ -169,7 +255,7 @@ namespace ConquestGameManager.Managers
         
         public async Task UpdateDeathCountAsync(UnturnedPlayer player)
         {
-            using MySqlConnection conn = new MySqlConnection(ConnectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             try
             {
                 await conn.OpenAsync();
@@ -216,6 +302,40 @@ namespace ConquestGameManager.Managers
             }
         }
         
+        public async Task<GamePlayer> GetPlayerInfoAsync(CSteamID steamID)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "SELECT * FROM `gameplayerinfo` WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", steamID.ToString());
+
+                using var reader = await comm.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    var username = reader["Username"].ToString();
+                    var firstJoined = Convert.ToDateTime(reader["First Joined"]);
+                    var lastJoined = Convert.ToDateTime(reader["Last Joined"]);
+
+                    return new GamePlayer(steamID, username, firstJoined, lastJoined);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error fetching player info for {steamID} from the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+            return null;
+        }
+
         public async Task<PlayerStats> GetPlayerStatsAsync(CSteamID steamID)
         {
             using var conn = new MySqlConnection(ConnectionString);
@@ -223,25 +343,22 @@ namespace ConquestGameManager.Managers
             {
                 await conn.OpenAsync();
 
-                // Query the database to get player stats based on the player's SteamID
-                const string query = "SELECT * FROM `GamePlayerStats` WHERE `SteamID` = @steamID;";
+                const string query = "SELECT * FROM `gameplayerstats` WHERE `SteamID` = @steamID;";
                 var comm = new MySqlCommand(query, conn);
-                comm.Parameters.AddWithValue("@steamID", steamID.ToString()); // Convert SteamID to string
+                comm.Parameters.AddWithValue("@steamID", steamID.ToString());
 
                 using var reader = await comm.ExecuteReaderAsync();
 
                 if (await reader.ReadAsync())
                 {
-                    // Parse the retrieved data and create a PlayerStats object
-                    var username = reader["Username"].ToString(); // You can retrieve the username if needed
+                    var username = reader["Username"].ToString();
                     var kills = Convert.ToInt32(reader["Kills"]);
                     var deaths = Convert.ToInt32(reader["Deaths"]);
                     var kdr = Convert.ToDouble(reader["KDR"]);
                     var headshots = Convert.ToInt32(reader["Headshots"]);
                     var headshotAccuracy = Convert.ToDouble(reader["Headshot Accuracy"]);
 
-                    var playerStats = new PlayerStats(steamID, username, kills, deaths, kdr, headshots, headshotAccuracy);
-                    return playerStats;
+                    return new PlayerStats(steamID, username, kills, deaths, kdr, headshots, headshotAccuracy);
                 }
             }
             catch (Exception ex)
@@ -292,7 +409,6 @@ namespace ConquestGameManager.Managers
             }
             return null;
         }
-
         
         private void CacheGet()
         {
@@ -300,7 +416,7 @@ namespace ConquestGameManager.Managers
             try
             {
                 conn.Open();
-                MySqlDataReader rdr = new MySqlCommand("SELECT * FROM `GamePlayerInfo`;", conn).ExecuteReader();
+                var rdr = new MySqlCommand("SELECT * FROM `GamePlayerInfo`;", conn).ExecuteReader();
 
                 try
                 {
@@ -315,7 +431,7 @@ namespace ConquestGameManager.Managers
                                 continue;
                             }
 
-                            string username = rdr[1].ToString();
+                            var username = rdr[1].ToString();
 
                             if (!DateTime.TryParse(rdr[2].ToString(), out DateTime firstJoined))
                             {
