@@ -51,5 +51,10 @@ namespace ConquestGameManager
         public static string ToUnrich(this string value) => new Regex(@"<[^>]*>", RegexOptions.IgnoreCase).Replace(value, "").Trim();
         public static string ToRich(this string value) => value.Replace('[', '<').Replace(']', '>').Replace("osqb", "[").Replace("csqb", "]");
         public static string ToSquareBrackets(this string value) => value.Replace("[", "osqb").Replace("]", "csqb");
+        
+        public static void OpenUrl(UnturnedPlayer player, string desc, string url)
+        {
+            player.Player.sendBrowserRequest(desc, url);
+        }
     }
 }
