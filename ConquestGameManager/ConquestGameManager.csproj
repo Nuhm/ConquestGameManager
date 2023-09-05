@@ -43,6 +43,7 @@
     <Compile Include="Commands\SetLobbyCommand.cs" />
     <Compile Include="Commands\SetSpawnCommand.cs" />
     <Compile Include="Commands\StatsCommand.cs" />
+    <Compile Include="Commands\StoreCommand.cs" />
     <Compile Include="Commands\SudoCommand.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Main.cs" />
