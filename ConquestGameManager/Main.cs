@@ -111,7 +111,8 @@ namespace ConquestGameManager
             var limbType = GetLimbType(limb);
             var weaponType = GetWeaponType(killerPlayer);
             
-            var distance = Vector3.Distance(player.Position, killerPlayer.Position);
+            var distance = Math.Round(Vector3.Distance(player.Position, killerPlayer.Position), 2);
+
             
             ThreadPool.QueueUserWorkItem(async (o) =>
             {

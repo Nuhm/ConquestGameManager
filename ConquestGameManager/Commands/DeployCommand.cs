@@ -9,15 +9,10 @@ namespace ConquestGameManager.Commands
     internal class DeployCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
-
         public string Name => "deploy";
-
         public string Help => "Command to deploy to game";
-
         public string Syntax => "/deploy";
-
         public List<string> Aliases => new();
-
         public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
