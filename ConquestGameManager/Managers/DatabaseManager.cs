@@ -87,7 +87,7 @@ namespace ConquestGameManager.Managers
                 try
                 {
                     await conn.OpenAsync();
-                    MySqlCommand comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerStats` (`SteamID`, `Username`, `Kills`, `Deaths`, `KDR`, `Headshots`, `Headshot Accuracy`) VALUES ({steamID}, '{username}', 0, 0, 1.0, 0, 1.0);", conn);
+                    var comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerStats` (`SteamID`, `Username`, `Kills`, `Deaths`, `KDR`, `Headshots`, `Headshot Accuracy`) VALUES ({steamID}, '{username}', 0, 0, 1.0, 0, 1.0);", conn);
                     await comm.ExecuteScalarAsync();
 
                     lock (StatsData)
@@ -145,7 +145,8 @@ namespace ConquestGameManager.Managers
                 PlaytimeTracker.Add(steamID, 0);
             }
 
-            var playtimeTimer = new Timer(Callback, null, 1000, 1000);
+            var timer = new Timer(Callback, null, 1000, 1000);
+            if (timer == null) throw new ArgumentNullException(nameof(timer));
             return;
 
             void Callback(object state)
@@ -162,7 +163,6 @@ namespace ConquestGameManager.Managers
             return PlaytimeTracker.TryGetValue(steamID, out var currentPlaytime) ? currentPlaytime : 0;
         }
 
-        
         public async Task UpdatePlaytimeAsync(CSteamID steamID, int playtimeSeconds)
         {
             using var conn = new MySqlConnection(ConnectionString);

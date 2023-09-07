@@ -17,7 +17,7 @@ namespace ConquestGameManager.Models
         [XmlIgnore] // Prevent LastUsed from being automatically serialized/deserialized
         public DateTime LastUsed { get; set; }
 
-        public Location(int locationID, Boolean hasCooldown, float locationX, float locationY, float locationZ)
+        public Location(int locationID, bool hasCooldown, float locationX, float locationY, float locationZ)
         {
             LocationID = locationID;
             HasCooldown = hasCooldown;

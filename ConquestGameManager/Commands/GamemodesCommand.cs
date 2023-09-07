@@ -15,9 +15,9 @@ namespace ConquestGameManager.Commands
 
         public string Syntax => "/gamemodes";
 
-        public List<string> Aliases => new List<string>();
+        public List<string> Aliases => new();
 
-        public List<string> Permissions => new List<string>();
+        public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -33,13 +33,14 @@ namespace ConquestGameManager.Commands
                 .Where(gamemode => gamemode.IsEnabled)
                 .Select(gamemode => gamemode.Name);
 
-            if (enabledGamemodeNames.Count() == 0)
+            var gamemodeNames = enabledGamemodeNames.ToList();
+            if (!gamemodeNames.Any())
             {
                 UnturnedChat.Say(caller, "No enabled gamemodes available.");
                 return;
             }
 
-            var gamemodesMessage = "Available gamemodes: " + string.Join(", ", enabledGamemodeNames);
+            var gamemodesMessage = "Available gamemodes: " + string.Join(", ", gamemodeNames);
             UnturnedChat.Say(caller, gamemodesMessage);
         }
     }

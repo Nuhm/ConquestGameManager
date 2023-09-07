@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Threading;
 using ConquestGameManager.Webhook;
+using Rocket.Core.Utils;
+using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using Steamworks;
@@ -16,14 +18,7 @@ namespace ConquestGameManager.Managers
         private static SpawnManager instance;
         public static SpawnManager Instance
         {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new SpawnManager();
-                }
-                return instance;
-            }
+            get { return instance ??= new SpawnManager(); }
         }
 
         private SpawnManager()
@@ -33,12 +28,12 @@ namespace ConquestGameManager.Managers
 
         public void RespawnPlayer(UnturnedPlayer player)
         {
-            byte angle = 0;
+            const byte angle = 0;
             
             var remainingTime = GameManager.Instance.GetRemainingTime();
-            double remainingSeconds = remainingTime.TotalSeconds;
+            var remainingSeconds = remainingTime.TotalSeconds;
 
-            if (GameManager.Instance.ActivePlayers.Contains(player) && remainingSeconds > Main.Instance.Configuration.Instance.RespawnLimitSeconds)
+            if (GameManager.ActivePlayers.Contains(player) && remainingSeconds > Main.Instance.Configuration.Instance.RespawnLimitSeconds)
             {  
                 var map = Main.Instance.Configuration.Instance.Maps.FirstOrDefault(k => k.MapID == GameManager.Instance.currentMap);
                 if (map != null)
@@ -97,6 +92,14 @@ namespace ConquestGameManager.Managers
             }
             else
             {
+                ReturnToLobby(player);
+            }
+        }
+        
+        public void ReturnToLobby(UnturnedPlayer player)
+        {
+            TaskDispatcher.QueueOnMainThread(() =>
+            {
                 if (Main.Instance.Configuration.Instance.LoggingEnabled)
                 {
                     Logger.Log($"{player} is not an active player, returning them to the lobby");
@@ -113,7 +116,13 @@ namespace ConquestGameManager.Managers
                 }
 
                 player.Player.quests.ServerAssignToGroup(steamGroupId, EPlayerGroupRank.MEMBER, true);
-            }
+
+                player.Teleport(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
+                UnturnedChat.Say(player, "You have been returned to the lobby!");
+            });
+            
+            GameManager.ActivePlayers.Remove(player);
+            
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ConquestGameManager.Models;
 using ConquestGameManager.Webhook;
 using Rocket.API;
 using Rocket.Core;
@@ -14,7 +13,6 @@ using SDG.Unturned;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 using Random = UnityEngine.Random;
-using Time = ConquestGameManager.Models.Time;
 
 namespace ConquestGameManager.Managers
 {
@@ -26,7 +24,7 @@ namespace ConquestGameManager.Managers
         public int currentGameModeIndex;
         public int currentMap;
         private int previousGameModeIndex = -1;
-        public List<UnturnedPlayer> ActivePlayers { get; } = new List<UnturnedPlayer>();
+        public static List<UnturnedPlayer> ActivePlayers { get; } = new();
 
         private GameManager()
         {
@@ -60,76 +58,52 @@ namespace ConquestGameManager.Managers
         {
             gameModes[currentGameModeIndex].Update(elapsedTime);
 
-            if (gameModes[currentGameModeIndex].IsFinished)
+            if (!gameModes[currentGameModeIndex].IsFinished) return;
+            ThreadPool.QueueUserWorkItem((o) =>
             {
-                ThreadPool.QueueUserWorkItem((o) =>
-                {
-                    Embed embed = new Embed(null, $"A **{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has ended!", null, "16714764", DateTime.UtcNow.ToString("s"),
-                        new Footer(Provider.serverName, Provider.configData.Browser.Icon),
-                        new Author(null, null, null),
-                        new Field[]
-                        {
-                        },
-                        null, null);
-                    DiscordManager.SendEmbed(embed, "Game Ended", Main.Instance.Configuration.Instance.GameInfoWebhook);
-                });
-            
-                // Send game summary webhook here
-                
-                TaskDispatcher.QueueOnMainThread( () =>
+                var embed = new Embed(null, $"A **{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has ended!", null, "16714764", DateTime.UtcNow.ToString("s"),
+                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                    new Author(null, null, null),
+                    new Field[]
                     {
-                        ReturnToLobby();
-                        
-                        Utility.Broadcast("The game has just ended!");
-                        Utility.Broadcast("A new game is starting!");
-
-                        SwitchToNextGameMode();
-                    }
-                );
-            }
-        }
-
-        private void ReturnToLobby()
-        {
-            List<UnturnedPlayer> playersToTeleport = new List<UnturnedPlayer>();
-
-            foreach (var player in ActivePlayers)
-            {
-                playersToTeleport.Add(player);
-            }
-
-            foreach (var player in playersToTeleport)
-            {
-                TaskDispatcher.QueueOnMainThread(() =>
-                {
-                    if (player == null)
-                        return;
-
-                    player.Teleport(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
-                    UnturnedChat.Say(player, "You have been returned to the lobby!");
-                });
+                    },
+                    null, null);
+                DiscordManager.SendEmbed(embed, "Game Ended", Main.Instance.Configuration.Instance.GameInfoWebhook);
+            });
+            
+            // Send game summary webhook here
                 
-                ActivePlayers.Remove(player);
-            }
+            TaskDispatcher.QueueOnMainThread( () =>
+                {
+                    var playersToTeleport = GameManager.ActivePlayers.ToList();
+                    foreach (var player in playersToTeleport)
+                    {
+                        SpawnManager.Instance.ReturnToLobby(player);
+                    }
+                        
+                    Utility.Broadcast("The game has just ended!");
+                    Utility.Broadcast("A new game is starting!");
+
+                    SwitchToNextGameMode();
+                }
+            );
         }
 
         private void SwitchToNextGameMode()
         {
-            // Choose a random enabled map
-            List<Map> enabledMaps = Main.Instance.Configuration.Instance.Maps.Where(map => map.IsEnabled).ToList();
+            var enabledMaps = Main.Instance.Configuration.Instance.Maps.Where(map => map.IsEnabled).ToList();
             if (enabledMaps.Count > 0)
             {
-                int randomMapIndex = Random.Range(0, enabledMaps.Count);
-                Map randomMap = enabledMaps[randomMapIndex];
+                var randomMapIndex = Random.Range(0, enabledMaps.Count);
+                var randomMap = enabledMaps[randomMapIndex];
                 currentMap = randomMap.MapID;
             }
             else
             {
-                currentMap = 0; // Fallback map
+                currentMap = 0;
             }
     
-            // Choose a random game mode that is not the same as the previous one
-            int randomGameModeIndex = GetRandomNonRepeatingGameModeIndex();
+            var randomGameModeIndex = GetRandomNonRepeatingGameModeIndex();
             currentGameModeIndex = randomGameModeIndex;
 
             SwitchToGameMode(currentGameModeIndex);
@@ -151,7 +125,7 @@ namespace ConquestGameManager.Managers
 
         private void SwitchToGameMode(int index)
         {
-            Map selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == currentMap);
+            var selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == currentMap);
             SetRandomTimeOfDay(selectedMap.TimeWeights);
             
             gameModes[index].Start();
@@ -159,8 +133,8 @@ namespace ConquestGameManager.Managers
         
         private void SetRandomTimeOfDay(List<Models.Time> timeWeights)
         {
-            float totalWeight = timeWeights.Sum(time => time.Dawn + time.Day + time.Dusk + time.Night);
-            float randomValue = Random.Range(0f, totalWeight);
+            var totalWeight = timeWeights.Sum(time => time.Dawn + time.Day + time.Dusk + time.Night);
+            var randomValue = Random.Range(0f, totalWeight);
 
             foreach (var time in timeWeights)
             {
@@ -184,23 +158,27 @@ namespace ConquestGameManager.Managers
             }
         }
 
-        private void SetTimeOfDay(int time)
+        private static void SetTimeOfDay(int time)
         {
             R.Commands.Execute(new ConsolePlayer(), $"/time {time}");
         }
         
-        public bool ChangeGameMode(UnturnedPlayer player, string newMode)
+        public bool ChangeGameMode(string newMode)
         {
-            int newModeIndex = gameModes.FindIndex(mode => mode.Name.Equals(newMode, StringComparison.OrdinalIgnoreCase));
+            var newModeIndex = gameModes.FindIndex(mode => mode.Name.Equals(newMode, StringComparison.OrdinalIgnoreCase));
 
             if (newModeIndex == -1)
             {
-                return false; // Invalid gamemode
+                return false;
             }
     
             gameModes[currentGameModeIndex].Stop();
             
-            ReturnToLobby();
+            var playersToTeleport = GameManager.ActivePlayers.ToList();
+            foreach (var player in playersToTeleport)
+            {
+                SpawnManager.Instance.ReturnToLobby(player);
+            }
             SwitchToGameMode(newModeIndex);
     
             return true;
@@ -212,53 +190,45 @@ namespace ConquestGameManager.Managers
             {
                 return gameModes[currentGameModeIndex].RemainingTime;
             }
-            else
-            {
-                // Handle the case where the currentGameModeIndex is invalid
-                return TimeSpan.Zero; // Or some default value
-            }
+            return TimeSpan.Zero;
         }
 
         public void PlayerJoinedGame(UnturnedPlayer player)
         {
-            if (!ActivePlayers.Contains(player))
-            {
-                ActivePlayers.Add(player);
-                Logger.Log($"{player} joined game");
+            if (ActivePlayers.Contains(player)) return;
+            ActivePlayers.Add(player);
+            Logger.Log($"{player} joined game");
                 
-                ThreadPool.QueueUserWorkItem((o) =>
-                {
-                    Embed embed = new Embed(null, $"**{player.SteamName}** deployed to the game", null, "16714764", DateTime.UtcNow.ToString("s"),
-                        new Footer(Provider.serverName, Provider.configData.Browser.Icon),
-                        new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
-                        new Field[]
-                        {
-                        },
-                        null, null);
-                    DiscordManager.SendEmbed(embed, "Deployed to game", Main.Instance.Configuration.Instance.DeployWebhook);
-                });
-            }
+            ThreadPool.QueueUserWorkItem((o) =>
+            {
+                var embed = new Embed(null, $"**{player.SteamName}** deployed to the game", null, "16714764", DateTime.UtcNow.ToString("s"),
+                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                    new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
+                    new Field[]
+                    {
+                    },
+                    null, null);
+                DiscordManager.SendEmbed(embed, "Deployed to game", Main.Instance.Configuration.Instance.DeployWebhook);
+            });
         }
 
         public void PlayerLeftGame(UnturnedPlayer player)
         {
-            if (ActivePlayers.Contains(player))
-            {
-                ActivePlayers.Remove(player);
-                Logger.Log($"{player} left game");
+            if (!ActivePlayers.Contains(player)) return;
+            ActivePlayers.Remove(player);
+            Logger.Log($"{player} left game");
                 
-                ThreadPool.QueueUserWorkItem((o) =>
-                {
-                    Embed embed = new Embed(null, $"**{player.SteamName}** returned to the lobby", null, "16714764", DateTime.UtcNow.ToString("s"),
-                        new Footer(Provider.serverName, Provider.configData.Browser.Icon),
-                        new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
-                        new Field[]
-                        {
-                        },
-                        null, null);
-                    DiscordManager.SendEmbed(embed, "Returned to lobby", Main.Instance.Configuration.Instance.DeployWebhook);
-                });
-            }
+            ThreadPool.QueueUserWorkItem((o) =>
+            {
+                var embed = new Embed(null, $"**{player.SteamName}** returned to the lobby", null, "16714764", DateTime.UtcNow.ToString("s"),
+                    new Footer(Provider.serverName, Provider.configData.Browser.Icon),
+                    new Author(player.SteamName, $"https://steamcommunity.com/profiles/{player.CSteamID}/", player.SteamProfile.AvatarIcon.ToString()),
+                    new Field[]
+                    {
+                    },
+                    null, null);
+                DiscordManager.SendEmbed(embed, "Returned to lobby", Main.Instance.Configuration.Instance.DeployWebhook);
+            });
         }
 
         public IEnumerable<UnturnedPlayer> GetUnturnedPlayers() => ActivePlayers.ToList();
@@ -286,9 +256,9 @@ namespace ConquestGameManager.Managers
             
             ThreadPool.QueueUserWorkItem((o) =>
             {
-                Map selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == GameManager.Instance.currentMap);
+                var selectedMap = Main.Instance.Configuration.Instance.Maps.Find(map => map.MapID == GameManager.Instance.currentMap);
                 
-                Embed embed = new Embed(null, $"A **{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has started!", null, "16714764", DateTime.UtcNow.ToString("s"),
+                var embed = new Embed(null, $"A **{GameManager.Instance.gameModes[GameManager.Instance.currentGameModeIndex].Name}** game has started!", null, "16714764", DateTime.UtcNow.ToString("s"),
                     new Footer(Provider.serverName, Provider.configData.Browser.Icon),
                     new Author(null, null, null),
                     new Field[]
@@ -329,21 +299,19 @@ namespace ConquestGameManager.Managers
     
         private void LogCountdown()
         {
-            TimeSpan formattedTime = TimeSpan.FromSeconds(Math.Ceiling(remainingTime.TotalSeconds));
-            double remainingSeconds = formattedTime.TotalSeconds;
+            var formattedTime = TimeSpan.FromSeconds(Math.Ceiling(remainingTime.TotalSeconds));
+            var remainingSeconds = formattedTime.TotalSeconds;
             
             if (Main.Instance.Configuration.Instance.LoggingEnabled)
             {
                 Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds}");
             }
 
-            if (remainingSeconds is >= 1 and <= 30)
+            if (remainingSeconds is < 1 or > 30) return;
+            var countdownThresholds = new List<int> { 30, 10, 5, 4, 3, 2, 1 };
+            if (countdownThresholds.Contains((int)remainingSeconds))
             {
-                List<int> countdownThresholds = new List<int> { 30, 10, 5, 4, 3, 2, 1 };
-                if (countdownThresholds.Contains((int)remainingSeconds))
-                {
-                    Utility.Broadcast($"Only {(int)remainingSeconds} seconds left in this {Name} game!");
-                }
+                Utility.Broadcast($"Only {(int)remainingSeconds} seconds left in this {Name} game!");
             }
         }
     }

@@ -11,16 +11,11 @@ namespace ConquestGameManager.Commands
     internal class SetSpawnCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
-
         public string Name => "setspawn";
-
         public string Help => "Command to set map spawns";
-
         public string Syntax => "/setspawn (Map ID) (Location ID)";
-
-        public List<string> Aliases => new List<string>();
-
-        public List<string> Permissions => new List<string>();
+        public List<string> Aliases => new();
+        public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -32,13 +27,13 @@ namespace ConquestGameManager.Commands
                 return;
             }
 
-            if (!int.TryParse(command[0], out int mapID))
+            if (!int.TryParse(command[0], out var mapID))
             {
                 Utility.Say(caller, Main.Instance.Translate("Id_Wrong").ToRich());
                 return;
             }
 
-            if (!int.TryParse(command[1], out int locationID))
+            if (!int.TryParse(command[1], out var locationID))
             {
                 Utility.Say(caller, Main.Instance.Translate("Id_Wrong").ToRich());
                 return;
@@ -54,18 +49,21 @@ namespace ConquestGameManager.Commands
             var location = map.Locations.FirstOrDefault(k => k.LocationID == locationID);
             if (location == null)
             {
-                int newLocationID = map.Locations.Max(existingLocation => existingLocation.LocationID) + 1;
+                var newLocationID = map.Locations.Max(existingLocation => existingLocation.LocationID) + 1;
 
-                var newLocation = new Location
+                if (player != null)
                 {
-                    LocationID = newLocationID,
-                    HasCooldown = false,
-                    LocationX = player.Position.x,
-                    LocationY = player.Position.y,
-                    LocationZ = player.Position.z
-                };
+                    var newLocation = new Location
+                    {
+                        LocationID = newLocationID,
+                        HasCooldown = false,
+                        LocationX = player.Position.x,
+                        LocationY = player.Position.y,
+                        LocationZ = player.Position.z
+                    };
 
-                map.Locations.Add(newLocation);
+                    map.Locations.Add(newLocation);
+                }
 
                 if (int.Parse(command[1]) != newLocationID)
                 {
@@ -77,9 +75,12 @@ namespace ConquestGameManager.Commands
             }
             else
             {
-                location.LocationX = player.Position.x;
-                location.LocationY = player.Position.y;
-                location.LocationZ = player.Position.z;
+                if (player != null)
+                {
+                    location.LocationX = player.Position.x;
+                    location.LocationY = player.Position.y;
+                    location.LocationZ = player.Position.z;
+                }
 
                 Utility.Say(caller, Main.Instance.Translate("Updated_Location", map.MapName, locationID).ToRich());
             }

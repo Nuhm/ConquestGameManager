@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -15,8 +16,8 @@ namespace ConquestGameManager.Commands
         public string Name => "sudo";
         public string Help => "Command to execute commands on behalf of another";
         public string Syntax => "/sudo [player | *] [command]";
-        public List<string> Aliases => new List<string>();
-        public List<string> Permissions => new List<string>();
+        public List<string> Aliases => new();
+        public List<string> Permissions => new();
         [Obsolete("Obsolete")]
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -30,21 +31,17 @@ namespace ConquestGameManager.Commands
 
             if (command[0].Equals("*"))
             {
-                foreach (var player in Provider.clients)
+                foreach (var steamID in from player in Provider.clients where player != null select UnturnedPlayer.FromSteamPlayer(player).CSteamID)
                 {
-                    if (player != null)
-                    {
-                        CSteamID steamID = UnturnedPlayer.FromSteamPlayer(player).CSteamID;
-                        ChatManager.instance.askChat(steamID, (byte)EChatMode.GLOBAL, message);
-                    }
+                    ChatManager.instance.askChat(steamID, (byte)EChatMode.GLOBAL, message);
                 }
             }
             else
             {
-                UnturnedPlayer player = UnturnedPlayer.FromName(command[0]);
+                var player = UnturnedPlayer.FromName(command[0]);
                 if (player != null)
                 {
-                    CSteamID steamID = player.CSteamID;
+                    var steamID = player.CSteamID;
                     ChatManager.instance.askChat(steamID, (byte) EChatMode.GLOBAL, message);
                 }
                 else

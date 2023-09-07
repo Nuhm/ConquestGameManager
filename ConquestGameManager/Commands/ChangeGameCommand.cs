@@ -12,8 +12,8 @@ namespace ConquestGameManager.Commands
         public string Name => "changegame";
         public string Help => "Change the game mode.";
         public string Syntax => "/changegame <mode>";
-        public List<string> Aliases => new List<string>();
-        public List<string> Permissions => new List<string>();
+        public List<string> Aliases => new();
+        public List<string> Permissions => new();
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = caller as UnturnedPlayer;
@@ -24,17 +24,13 @@ namespace ConquestGameManager.Commands
                 return;
             }
 
-            string newMode = command[0]; // Get the specified mode
+            var newMode = command[0]; // Get the specified mode
 
             // Logic to change the game mode using GameManager
-            if (GameManager.Instance.ChangeGameMode(player, newMode))
-            {
-                UnturnedChat.Say(caller, $"Switched to {newMode} game mode!");
-            }
-            else
-            {
-                UnturnedChat.Say(caller, $"Invalid game mode: {newMode}");
-            }
+            UnturnedChat.Say(caller,
+                GameManager.Instance.ChangeGameMode(newMode)
+                    ? $"Switched to {newMode} game mode!"
+                    : $"Invalid game mode: {newMode}");
         }
     }
 }

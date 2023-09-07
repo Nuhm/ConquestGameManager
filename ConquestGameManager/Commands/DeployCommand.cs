@@ -16,22 +16,22 @@ namespace ConquestGameManager.Commands
 
         public string Syntax => "/deploy";
 
-        public List<string> Aliases => new List<string>();
+        public List<string> Aliases => new();
 
-        public List<string> Permissions => new List<string>();
+        public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = caller as UnturnedPlayer;
             
-            if (GameManager.Instance.ActivePlayers.Contains(player))
+            if (GameManager.ActivePlayers.Contains(player))
             {
                 UnturnedChat.Say(caller, "You are already deployed!");
                 return;
             }
             
             var remainingTime = GameManager.Instance.GetRemainingTime();
-            double remainingSeconds = remainingTime.TotalSeconds;
+            var remainingSeconds = remainingTime.TotalSeconds;
             
             if (remainingSeconds <= Main.Instance.Configuration.Instance.DeployLimitSeconds)
             {

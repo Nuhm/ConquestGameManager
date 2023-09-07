@@ -9,22 +9,22 @@ namespace ConquestGameManager.Commands
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
 
         public string Name => "setlobby";
-
         public string Help => "Command to set server lobby spawn point";
-
         public string Syntax => "/setlobby";
-
-        public List<string> Aliases => new List<string>();
-
-        public List<string> Permissions => new List<string>();
+        public List<string> Aliases => new()
+        {
+            Capacity = 0
+        };
+        public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            var player = caller as UnturnedPlayer;
-            
-            Main.Instance.Configuration.Instance.LobbyX = player.Position.x;
-            Main.Instance.Configuration.Instance.LobbyY = player.Position.y;
-            Main.Instance.Configuration.Instance.LobbyZ = player.Position.z;
+            if (caller is UnturnedPlayer player)
+            {
+                Main.Instance.Configuration.Instance.LobbyX = player.Position.x;
+                Main.Instance.Configuration.Instance.LobbyY = player.Position.y;
+                Main.Instance.Configuration.Instance.LobbyZ = player.Position.z;
+            }
 
             Main.Instance.Configuration.Save();
 

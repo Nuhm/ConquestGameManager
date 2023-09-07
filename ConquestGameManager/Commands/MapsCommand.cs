@@ -15,9 +15,9 @@ namespace ConquestGameManager.Commands
 
         public string Syntax => "/maps";
 
-        public List<string> Aliases => new List<string>();
+        public List<string> Aliases => new();
 
-        public List<string> Permissions => new List<string>();
+        public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -33,13 +33,14 @@ namespace ConquestGameManager.Commands
                 .Where(map => map.IsEnabled)
                 .Select(map => map.MapName);
 
-            if (enabledMapNames.Count() == 0)
+            var mapNames = enabledMapNames.ToList();
+            if (!mapNames.Any())
             {
                 UnturnedChat.Say(caller, "No enabled maps available.");
                 return;
             }
 
-            var mapsMessage = "Available enabled maps: " + string.Join(", ", enabledMapNames);
+            var mapsMessage = "Available enabled maps: " + string.Join(", ", mapNames);
             UnturnedChat.Say(caller, mapsMessage);
         }
     }
