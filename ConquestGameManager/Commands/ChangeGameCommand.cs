@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using ConquestGameManager.Managers;
 using Rocket.API;
 using Rocket.Unturned.Chat;
-using Rocket.Unturned.Player;
 
 namespace ConquestGameManager.Commands
 {
@@ -16,8 +15,6 @@ namespace ConquestGameManager.Commands
         public List<string> Permissions => new();
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            var player = caller as UnturnedPlayer;
-
             if (command.Length < 1)
             {
                 UnturnedChat.Say(caller, "Usage: /changegame <mode>");

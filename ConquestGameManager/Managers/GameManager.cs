@@ -7,10 +7,8 @@ using ConquestGameManager.Webhook;
 using Rocket.API;
 using Rocket.Core;
 using Rocket.Core.Utils;
-using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
-using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 using Random = UnityEngine.Random;
 
@@ -24,6 +22,7 @@ namespace ConquestGameManager.Managers
         public int currentGameModeIndex;
         public int currentMap;
         private int previousGameModeIndex = -1;
+        private bool gameTransitionInProgress;
         public static List<UnturnedPlayer> ActivePlayers { get; } = new();
 
         private GameManager()
@@ -39,6 +38,8 @@ namespace ConquestGameManager.Managers
 
         public void Start()
         {
+            gameTransitionInProgress = false;
+            Logger.Log("What's calling this? START");
             SwitchToNextGameMode();
             Logger.Log("Started GAME!");
 
@@ -56,6 +57,12 @@ namespace ConquestGameManager.Managers
         
         private void Update(TimeSpan elapsedTime)
         {
+            if (gameTransitionInProgress)
+            {
+                // You can either wait and retry or simply return without starting a new game
+                return;
+            }
+            
             gameModes[currentGameModeIndex].Update(elapsedTime);
 
             if (!gameModes[currentGameModeIndex].IsFinished) return;
@@ -75,6 +82,12 @@ namespace ConquestGameManager.Managers
                 
             TaskDispatcher.QueueOnMainThread( () =>
                 {
+                    if (gameTransitionInProgress)
+                    {
+                        // You can either wait and retry or simply return without starting a new game
+                        return;
+                    }
+                    
                     var playersToTeleport = GameManager.ActivePlayers.ToList();
                     foreach (var player in playersToTeleport)
                     {
@@ -84,6 +97,7 @@ namespace ConquestGameManager.Managers
                     Utility.Broadcast("The game has just ended!");
                     Utility.Broadcast("A new game is starting!");
 
+                    Logger.Log("What's calling this? UPDATE");
                     SwitchToNextGameMode();
                 }
             );
@@ -91,6 +105,14 @@ namespace ConquestGameManager.Managers
 
         private void SwitchToNextGameMode()
         {
+            Logger.Log("What's calling this? FINAL");
+            // Check if a game transition is already in progress
+            if (gameTransitionInProgress)
+            {
+                // You can either wait and retry or simply return without starting a new game
+                return;
+            }
+
             var enabledMaps = Main.Instance.Configuration.Instance.Maps.Where(map => map.IsEnabled).ToList();
             if (enabledMaps.Count > 0)
             {
@@ -102,11 +124,22 @@ namespace ConquestGameManager.Managers
             {
                 currentMap = 0;
             }
-    
+
             var randomGameModeIndex = GetRandomNonRepeatingGameModeIndex();
             currentGameModeIndex = randomGameModeIndex;
 
-            SwitchToGameMode(currentGameModeIndex);
+            // Set the flag to indicate that a transition is in progress
+            gameTransitionInProgress = true;
+
+            // Delay the game mode switch until the current game has fully ended
+            Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1)); // Adjust the delay as needed
+                SwitchToGameMode(currentGameModeIndex);
+
+                // Reset the flag now that the transition is complete
+                
+            });
         }
         
         private int GetRandomNonRepeatingGameModeIndex()
@@ -129,6 +162,7 @@ namespace ConquestGameManager.Managers
             SetRandomTimeOfDay(selectedMap.TimeWeights);
             
             gameModes[index].Start();
+            gameTransitionInProgress = false;
         }
         
         private void SetRandomTimeOfDay(List<Models.Time> timeWeights)
@@ -165,22 +199,42 @@ namespace ConquestGameManager.Managers
         
         public bool ChangeGameMode(string newMode)
         {
-            var newModeIndex = gameModes.FindIndex(mode => mode.Name.Equals(newMode, StringComparison.OrdinalIgnoreCase));
-
-            if (newModeIndex == -1)
+            Logger.Log("STARTUNGNNGNGNGGN");
+            // Check if a game transition is already in progress
+            if (gameTransitionInProgress)
             {
+                // You can either wait and retry or return false
                 return false;
             }
-    
+
+            // Set the flag to indicate that a transition is in progress
+            gameTransitionInProgress = true;
+
             gameModes[currentGameModeIndex].Stop();
-            
-            var playersToTeleport = GameManager.ActivePlayers.ToList();
+
+            // Add a 1-second delay if needed
+
+            var newModeIndex = gameModes.FindIndex(mode => mode.Name.Equals(newMode, StringComparison.OrdinalIgnoreCase));
+
+            if (newModeIndex == -1 || newModeIndex == currentGameModeIndex)
+            {
+                // Reset the flag since no transition occurred
+                gameTransitionInProgress = false;
+                return false; // Invalid game mode or same game mode, no change needed
+            }
+
+            var playersToTeleport = ActivePlayers.ToList();
             foreach (var player in playersToTeleport)
             {
                 SpawnManager.Instance.ReturnToLobby(player);
             }
+            Logger.Log("RUNNNNNN");
             SwitchToGameMode(newModeIndex);
-    
+
+            // Reset the flag now that the transition is complete
+            gameTransitionInProgress = false;
+
+            Logger.Log("ENDDDD");
             return true;
         }
 
@@ -284,6 +338,7 @@ namespace ConquestGameManager.Managers
 
         public void Stop()
         {
+            remainingTime = TimeSpan.Zero;
             IsFinished = true;
         }
         

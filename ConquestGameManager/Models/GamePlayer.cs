@@ -1,4 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Rocket.API;
+using Rocket.Core;
+using Rocket.Core.Logging;
 using Steamworks;
 
 namespace ConquestGameManager.Models
@@ -10,7 +15,11 @@ namespace ConquestGameManager.Models
         public DateTime FirstJoined { get; set; }
         public DateTime LastJoined { get; set; }
         public int Playtime { get; set; }
-        
+        public string KitsMsg { get; set; }
+        public List<string> Kits { get; set; }
+        public Dictionary<Kit, DateTime> LastKitClaim { get; set; }
+        public Kit LastUsedKit { get; set; }
+
         public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
             SteamID = steamID;
@@ -18,20 +27,25 @@ namespace ConquestGameManager.Models
             FirstJoined = firstJoined;
             LastJoined = lastJoined;
             Playtime = 0;
+
+            LastKitClaim = new Dictionary<Kit, DateTime>();
+            LastUsedKit = null;
+            
+            BuildAllKits();
         }
 
-        public static void UpdateValue(string coloumnName, int value)
+        public static void UpdateValue(string columnName, int value)
         {
-            switch (coloumnName.ToLower())
+            switch (columnName.ToLower())
             {
                 default:
                     break;
             }
         }
 
-        public void UpdateDateTime(string coloumnName, DateTime dateTime)
+        public void UpdateDateTime(string columnName, DateTime dateTime)
         {
-            switch (coloumnName.ToLower())
+            switch (columnName.ToLower())
             {
                 case "last joined":
                     LastJoined = dateTime;
@@ -39,6 +53,31 @@ namespace ConquestGameManager.Models
                 default:
                     break;
             }
+        }
+
+        private void BuildAllKits()
+        {
+            BuildKits();
+        }
+
+        private void BuildKits()
+        {
+            var player = new RocketPlayer(SteamID.ToString());
+            var perms = R.Permissions.GetPermissions(player).Where(k => k.Name.Contains("kit.")).Select(k => k.Name.Replace("kit.", "")).ToList() ?? throw new ArgumentNullException("R.Permissions.GetPermissions(player).Where(k => k.Name.Contains(\"kit.\")).Select(k => k.Name.Replace(\"kit.\", \"\")).ToList()");
+            if (!perms.Any())
+            {
+                return;
+            }
+
+            var customKitsMsg = perms.Aggregate("", (current, perm) => current + $"{perm}, ");
+
+            if (customKitsMsg.Length != 0)
+            {
+                customKitsMsg = customKitsMsg.Substring(0, customKitsMsg.Length - 2);
+            }
+
+            KitsMsg = customKitsMsg;
+            Kits = perms;
         }
     }
 }
