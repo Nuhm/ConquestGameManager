@@ -41,6 +41,7 @@
     <Compile Include="Commands\ListCommandsCommand.cs" />
     <Compile Include="Commands\LobbyCommand.cs" />
     <Compile Include="Commands\MapsCommand.cs" />
+    <Compile Include="Commands\Recount.cs" />
     <Compile Include="Commands\SetLobbyCommand.cs" />
     <Compile Include="Commands\SetSpawnCommand.cs" />
     <Compile Include="Commands\StatsCommand.cs" />

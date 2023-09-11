@@ -60,7 +60,7 @@ namespace ConquestGameManager.Models
             BuildKits();
         }
 
-        private void BuildKits()
+        public void BuildKits()
         {
             var player = new RocketPlayer(SteamID.ToString());
             var perms = R.Permissions.GetPermissions(player).Where(k => k.Name.Contains("kit.")).Select(k => k.Name.Replace("kit.", "")).ToList() ?? throw new ArgumentNullException("R.Permissions.GetPermissions(player).Where(k => k.Name.Contains(\"kit.\")).Select(k => k.Name.Replace(\"kit.\", \"\")).ToList()");

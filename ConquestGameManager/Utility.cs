@@ -1,9 +1,12 @@
 ﻿#nullable enable
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
+using ConquestGameManager.Models;
 using Rocket.API;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using Steamworks;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 
@@ -55,6 +58,32 @@ namespace ConquestGameManager
         public static void OpenUrl(UnturnedPlayer player, string desc, string url)
         {
             player.Player.sendBrowserRequest(desc, url);
+        }
+
+        public static bool TryGetPlayer(string input, out CSteamID steamID)
+        {
+            if (ulong.TryParse(input, out var result))
+            {
+                var ID = new CSteamID(result);
+                var data = Main.Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == ID);
+                if (data != null)
+                {
+                    steamID = data.SteamID;
+                    return true;
+                }
+            }
+            else
+            {
+                var player = PlayerTool.getPlayer(input);
+                if (player != null)
+                {
+                    steamID = player.channel.owner.playerID.steamID;
+                    return true;
+                }
+            }
+
+            steamID = CSteamID.Nil;
+            return false;
         }
     }
 }
