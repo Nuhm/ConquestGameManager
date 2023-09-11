@@ -9,15 +9,10 @@ namespace ConquestGameManager.Commands
     class RecountCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
-
         public string Name => "recount";
-
         public string Help => "Recount kits for a player";
-
         public string Syntax => "/recount (Name)";
-
         public List<string> Aliases => new();
-
         public List<string> Permissions => new();
 
         public void Execute(IRocketPlayer caller, string[] command)
@@ -28,7 +23,7 @@ namespace ConquestGameManager.Commands
                 {
                     gamePlayer?.BuildKits();
                 }
-                UnturnedChat.Say(caller, "Recounted all kits for the player, they should have access to all the kits they have perms for");
+                UnturnedChat.Say(caller, "Recounted all kits for all players, they should have access to all the kits they have perms for");
             }
             else if (!Utility.TryGetPlayer(command[0], out var steamID))
             {
@@ -37,8 +32,10 @@ namespace ConquestGameManager.Commands
             else
             {
                 var gamePlayer = Main.Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == steamID);
-                gamePlayer?.BuildKits();
-                UnturnedChat.Say(caller, "Recounted all the kits for the player, they should have access to all the kits they have perms for");
+                if (gamePlayer == null) return;
+                UnturnedChat.Say(caller,
+                    $"Recounted all the kits for {gamePlayer.Username}, they should have access to all the kits they have perms for");
+                gamePlayer.BuildKits();
             }
         }
     }
