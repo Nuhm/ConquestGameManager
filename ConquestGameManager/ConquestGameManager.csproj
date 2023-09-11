@@ -37,11 +37,12 @@
     <Compile Include="Commands\DeployCommand.cs" />
     <Compile Include="Commands\DiscordCommand.cs" />
     <Compile Include="Commands\GamemodesCommand.cs" />
+    <Compile Include="Commands\HelpCommand.cs" />
     <Compile Include="Commands\LeaderboardCommand.cs" />
     <Compile Include="Commands\ListCommandsCommand.cs" />
     <Compile Include="Commands\LobbyCommand.cs" />
     <Compile Include="Commands\MapsCommand.cs" />
-    <Compile Include="Commands\Recount.cs" />
+    <Compile Include="Commands\RecountCommand.cs" />
     <Compile Include="Commands\SetLobbyCommand.cs" />
     <Compile Include="Commands\SetSpawnCommand.cs" />
     <Compile Include="Commands\StatsCommand.cs" />
