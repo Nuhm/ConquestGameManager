@@ -42,6 +42,7 @@ namespace ConquestGameManager
         
         public static void ClearInventory(this PlayerInventory inv)
         {
+            Logger.Log("Clear inventory");
             for (byte page = 0; page < PlayerInventory.PAGES - 2; page++)
             for (var index = inv.getItemCount(page) - 1; index >= 0; index--)
                 inv.removeItem(page, (byte)index);
@@ -49,6 +50,7 @@ namespace ConquestGameManager
             inv.player.clothing.updateClothes(0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>());
             inv.player.equipment.sendSlot(0);
             inv.player.equipment.sendSlot(1);
+            Logger.Log("Cleared inventory");
         }
 
         public static string ToUnrich(this string value) => new Regex(@"<[^>]*>", RegexOptions.IgnoreCase).Replace(value, "").Trim();
