@@ -359,7 +359,7 @@ namespace ConquestGameManager.Managers
             
             if (Main.Instance.Configuration.Instance.LoggingEnabled)
             {
-                Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds}");
+                //Logger.Log($"Time remaining for {Name} mode: {formattedTime.TotalSeconds}");
             }
 
             if (remainingSeconds is < 1 or > 30) return;

@@ -6,7 +6,9 @@ using ConquestGameManager.Managers;
 using ConquestGameManager.Models;
 using ConquestGameManager.Webhook;
 using HarmonyLib;
+using Rocket.API;
 using Rocket.API.Collections;
+using Rocket.Core;
 using Rocket.Core.Plugins;
 using Rocket.Core.Utils;
 using Rocket.Unturned;
@@ -100,6 +102,15 @@ namespace ConquestGameManager
 
         private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {
+            var gamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
+            if (gamePlayer == null) return;
+            IEnumerable<Kit> wipeCooldown = gamePlayer.LastKitClaim.Where(k => k.Key.ResetCooldownOnDie == true).Select(k => k.Key).ToList();
+            foreach (var wipeKit in wipeCooldown)
+            {
+                gamePlayer.LastKitClaim.Remove(wipeKit);
+                Logger.Log($"Cleared cooldown for {wipeKit}");
+            }
+            
             var killerPlayer = UnturnedPlayer.FromCSteamID(murderer);
             var killerName = killerPlayer != null ? killerPlayer.DisplayName : "Unknown";
             
@@ -197,6 +208,34 @@ namespace ConquestGameManager
         private static void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
             SpawnManager.Instance.RespawnPlayer(player);
+            
+            var gamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
+
+            var kit = gamePlayer?.LastUsedKit;
+            Logger.Log($"Last used kit was {kit}");
+            if (kit == null)
+            {
+                return;
+            }
+            
+            if (gamePlayer.LastKitClaim.TryGetValue(kit, out var cooldown))
+            {
+                if ((DateTime.UtcNow - cooldown).TotalSeconds < kit.KitCooldownSeconds)
+                {
+                    return;
+                }
+
+                gamePlayer.LastKitClaim.Remove(kit);
+            }
+
+            if (kit.HasCooldown)
+            {
+                gamePlayer?.LastKitClaim.Add(kit, DateTime.UtcNow);
+            }
+            
+            Logger.Log($"Has cooldown? {kit.HasCooldown}");
+
+            R.Commands.Execute(new ConsolePlayer(), $"kit {kit.KitName} {player.CSteamID}");
         }
 
         public override TranslationList DefaultTranslations => new()

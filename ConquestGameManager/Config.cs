@@ -17,11 +17,13 @@ namespace ConquestGameManager
 
         public List<Map> Maps { get; set; }
         public List<Gamemode> Gamemodes { get; set; }
-        
+        public List<Rank> Ranks { get; set; }
         public int DeployLimitSeconds { get; set; }
         public int RespawnLimitSeconds { get; set; }
         public string DeployWebhook { get; set; }
         public string GameInfoWebhook { get; set; }
+        public string DefaultRank { get; set; }
+
 
         public void LoadDefaults()
         {
@@ -81,10 +83,28 @@ namespace ConquestGameManager
                     IsEnabled = true
                 }
             };
+            Ranks = new List<Rank>
+            {
+                new Rank("Lvl 1")
+                {
+                    RankKits = new List<string>
+                    {
+                        "Kit1"
+                    }
+                },
+                new Rank("Lvl 2")
+                {
+                    RankKits = new List<string>
+                    {
+                        "Kit2"
+                    }
+                }
+            };
             DeployLimitSeconds = 10;
             RespawnLimitSeconds = 10;
             DeployWebhook = "";
             GameInfoWebhook = "";
+            DefaultRank = "DefaultRank";
         }
     }
 }

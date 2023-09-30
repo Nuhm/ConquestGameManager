@@ -21,7 +21,7 @@ namespace ConquestGameManager.Commands
             {
                 foreach (var gamePlayer in Provider.clients.Select(player => player.playerID.steamID).Select(steamID => Main.Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == steamID)))
                 {
-                    gamePlayer?.BuildKits();
+                    gamePlayer?.BuildAllKits();
                 }
                 UnturnedChat.Say(caller, "Recounted all kits for all players, they should have access to all the kits they have perms for");
             }
@@ -35,7 +35,7 @@ namespace ConquestGameManager.Commands
                 if (gamePlayer == null) return;
                 UnturnedChat.Say(caller,
                     $"Recounted all the kits for {gamePlayer.Username}, they should have access to all the kits they have perms for");
-                gamePlayer.BuildKits();
+                gamePlayer.BuildAllKits();
             }
         }
     }

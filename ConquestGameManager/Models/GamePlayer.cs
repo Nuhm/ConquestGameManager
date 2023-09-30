@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Rocket.API;
 using Rocket.Core;
-using Rocket.Core.Logging;
 using Steamworks;
 
 namespace ConquestGameManager.Models
@@ -15,8 +14,10 @@ namespace ConquestGameManager.Models
         public DateTime FirstJoined { get; set; }
         public DateTime LastJoined { get; set; }
         public int Playtime { get; set; }
-        public string KitsMsg { get; set; }
-        public List<string> Kits { get; set; }
+        public string RankKitsMsg { get; set; }
+        public List<Kit> RankKits { get; set; }
+        public string CustomKitsMsg { get; set; }
+        public List<Kit> CustomKits { get; set; }
         public Dictionary<Kit, DateTime> LastKitClaim { get; set; }
         public Kit LastUsedKit { get; set; }
 
@@ -30,7 +31,7 @@ namespace ConquestGameManager.Models
 
             LastKitClaim = new Dictionary<Kit, DateTime>();
             LastUsedKit = null;
-            
+
             BuildAllKits();
         }
 
@@ -55,29 +56,47 @@ namespace ConquestGameManager.Models
             }
         }
 
-        private void BuildAllKits()
+        public void BuildAllKits()
         {
-            BuildKits();
+            BuildRankKits();
+            BuildCustomKits();
         }
 
-        public void BuildKits()
+        public void BuildRankKits()
+        {
+            // Assuming you have a reference to your Config object
+            var config = Main.Instance.Configuration.Instance;
+
+            // Find the default rank in the configuration
+            var defaultRank = config.Ranks.FirstOrDefault(r => r.RankName.Equals(config.DefaultRank, StringComparison.OrdinalIgnoreCase));
+
+            if (defaultRank != null)
+            {
+                // Use the kits defined in the default rank
+                RankKits = defaultRank.RankKits.Select(kitName => new Kit(kitName, 0, false, false, false)).ToList();
+                RankKitsMsg = string.Join(", ", RankKits.Select(kit => kit.KitName));
+            }
+            else
+            {
+                // Default rank not found in the configuration, no rank kits
+                RankKits = new List<Kit>();
+                RankKitsMsg = string.Empty;
+            }
+        }
+        
+        public void BuildCustomKits()
         {
             var player = new RocketPlayer(SteamID.ToString());
-            var perms = R.Permissions.GetPermissions(player).Where(k => k.Name.Contains("kit.")).Select(k => k.Name.Replace("kit.", "")).ToList() ?? throw new ArgumentNullException("R.Permissions.GetPermissions(player).Where(k => k.Name.Contains(\"kit.\")).Select(k => k.Name.Replace(\"kit.\", \"\")).ToList()");
+            var perms = R.Permissions.GetPermissions(player).Where(k => k.Name.Contains("kit.")).Select(k => k.Name.Replace("kit.", "")).ToList();
             if (!perms.Any())
             {
                 return;
             }
 
-            var customKitsMsg = perms.Aggregate("", (current, perm) => current + $"{perm}, ");
-
-            if (customKitsMsg.Length != 0)
-            {
-                customKitsMsg = customKitsMsg.Substring(0, customKitsMsg.Length - 2);
-            }
-
-            KitsMsg = customKitsMsg;
-            Kits = perms;
+            var customKits = perms.Select(kitName => new Kit(kitName, 0, false, false, false)).ToList();
+            CustomKitsMsg = string.Join(", ", perms);
+            CustomKits = customKits;
         }
+
     }
 }
