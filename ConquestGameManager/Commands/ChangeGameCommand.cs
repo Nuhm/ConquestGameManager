@@ -12,7 +12,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Change the game mode.";
         public string Syntax => "/changegame <mode>";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.admin" };
         public void Execute(IRocketPlayer caller, string[] command)
         {
             if (command.Length < 1)

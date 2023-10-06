@@ -15,7 +15,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Command to set map spawns";
         public string Syntax => "/setspawn (Map ID) (Location ID)";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.admin" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

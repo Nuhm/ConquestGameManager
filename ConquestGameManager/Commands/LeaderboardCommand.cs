@@ -12,7 +12,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Command to list the top players";
         public string Syntax => "/leaderboard [page]";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public async void Execute(IRocketPlayer caller, string[] command)
         {

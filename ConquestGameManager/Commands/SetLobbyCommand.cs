@@ -15,7 +15,7 @@ namespace ConquestGameManager.Commands
         {
             Capacity = 0
         };
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.admin" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

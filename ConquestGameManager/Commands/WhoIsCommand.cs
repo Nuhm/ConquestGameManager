@@ -13,7 +13,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Displays player information.";
         public string Syntax => "/whois <playername>";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

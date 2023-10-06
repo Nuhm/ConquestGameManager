@@ -13,7 +13,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Command to deploy to game";
         public string Syntax => "/deploy";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

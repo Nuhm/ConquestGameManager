@@ -8,16 +8,11 @@ namespace ConquestGameManager.Commands
     internal class GamemodesCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
-
         public string Name => "gamemodes";
-
         public string Help => "Command to list all available gamemodes";
-
         public string Syntax => "/gamemodes";
-
         public List<string> Aliases => new();
-
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

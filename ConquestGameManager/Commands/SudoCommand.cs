@@ -17,7 +17,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Command to execute commands on behalf of another";
         public string Syntax => "/sudo [player | *] [command]";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.admin" };
         [Obsolete("Obsolete")]
         public void Execute(IRocketPlayer caller, string[] command)
         {

@@ -11,7 +11,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Command to clear the player inventory";
         public string Syntax => "/ci";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

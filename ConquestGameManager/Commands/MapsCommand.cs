@@ -8,16 +8,11 @@ namespace ConquestGameManager.Commands
     internal class MapsCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
-
         public string Name => "maps";
-
         public string Help => "Command to list all available maps";
-
         public string Syntax => "/maps";
-
         public List<string> Aliases => new();
-
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

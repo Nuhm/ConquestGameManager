@@ -14,7 +14,7 @@ namespace ConquestGameManager.Commands
         public string Help => "List all accessible commands for the player.";
         public string Syntax => "/commands";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

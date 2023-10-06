@@ -13,7 +13,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Recount kits for a player";
         public string Syntax => "/recount (Name)";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.admin" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

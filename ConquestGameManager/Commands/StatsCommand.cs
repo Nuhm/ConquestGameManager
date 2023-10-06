@@ -16,7 +16,7 @@ namespace ConquestGameManager.Commands
         public string Help => "Command to list player stats";
         public string Syntax => "/stats [playername or SteamID]";
         public List<string> Aliases => new();
-        public List<string> Permissions => new();
+        public List<string> Permissions => new() { "cq.player" };
 
         public async void Execute(IRocketPlayer caller, string[] command)
         {
