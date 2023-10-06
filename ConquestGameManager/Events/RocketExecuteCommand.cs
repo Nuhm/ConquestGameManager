@@ -19,10 +19,10 @@ namespace ConquestGameManager.Events
             [HarmonyPrefix]
             public static bool Prefix(IRocketPlayer player, string command)
             {
-                UnturnedPlayer uply = player as UnturnedPlayer;
+                var uply = player as UnturnedPlayer;
                 if (uply == null) return true;
 
-                GamePlayer gamePlayer = Main.Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == uply.CSteamID);
+                var gamePlayer = Main.Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == uply.CSteamID);
                 if (gamePlayer == null)
                 {
                     return true;
@@ -33,7 +33,7 @@ namespace ConquestGameManager.Events
                     return true;
                 }
 
-                string cmd = command.ToLower();
+                var cmd = command.ToLower();
 
                 if (cmd.StartsWith("/kits"))
                 {
@@ -62,20 +62,21 @@ namespace ConquestGameManager.Events
                     }
                     return false;
                 }
-                else if (cmd.StartsWith("/kit"))
+
+                if (cmd.StartsWith("/kit"))
                 {
                     if (gamePlayer.RankKits == null && gamePlayer.CustomKits == null)
                     {
                         Utility.Say(player, Main.Instance.Translate("No_Kits").ToRich());
                         return false;
                     }
-                    string message = cmd.TrimStart('/');
-                    string[] args = message.Split(new char[] { ' ' });
+                    var message = cmd.TrimStart('/');
+                    var args = message.Split(' ');
                     if (args.Length != 2)
                     {
                         return false;
                     }
-                    List<Kit> totalKits = new List<Kit>();
+                    var totalKits = new List<Kit>();
                     if (gamePlayer.CustomKits != null)
                     {
                         if (gamePlayer.CustomKits.Any(kit => kit.KitName.Equals(args[1], StringComparison.OrdinalIgnoreCase)))
@@ -88,12 +89,10 @@ namespace ConquestGameManager.Events
                         totalKits.AddRange(gamePlayer.RankKits);
                     }
 
-                    Kit kit = totalKits.FirstOrDefault(k => k.KitName.Equals(args[1], StringComparison.OrdinalIgnoreCase));
+                    var kit = totalKits.FirstOrDefault(k => k.KitName.Equals(args[1], StringComparison.OrdinalIgnoreCase));
                     if (kit != null)
                     {
-                        bool isRankKit = gamePlayer.RankKits != null && gamePlayer.RankKits.Contains(kit);
-
-                        if (gamePlayer.LastKitClaim.TryGetValue(kit, out DateTime cooldown))
+                        if (gamePlayer.LastKitClaim.TryGetValue(kit, out var cooldown))
                         {
                             if ((DateTime.UtcNow - cooldown).TotalSeconds < kit.KitCooldownSeconds)
                             {
@@ -106,12 +105,12 @@ namespace ConquestGameManager.Events
                         if (kit.HasCooldown)
                             gamePlayer.LastKitClaim.Add(kit, DateTime.UtcNow);
 
-                        ConsolePlayer console = new ConsolePlayer();
+                        var console = new ConsolePlayer();
+                        
+                        // Wipes the players inventory when any kit is claimed
+                        uply.Player.inventory.ClearInventory();
 
-                        if (kit.WipeInventoryWhenClaim)
-                            uply.Player.inventory.ClearInventory();
-
-                        R.Commands.Execute(console, $"kit {(isRankKit ? "" : "")}{kit.KitName} {uply.CSteamID}");
+                        R.Commands.Execute(console, $"kit {kit.KitName} {uply.CSteamID}");
                         gamePlayer.LastUsedKit = kit;
                     }
                     else
