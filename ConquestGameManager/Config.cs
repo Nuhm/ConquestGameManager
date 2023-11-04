@@ -87,14 +87,14 @@ namespace ConquestGameManager
             {
                 new Rank("Lvl 1")
                 {
-                    RankKits = new List<string>
+                    RankKits = new List<Kit>
                     {
                         "Kit1"
                     }
                 },
                 new Rank("Lvl 2")
                 {
-                    RankKits = new List<string>
+                    RankKits = new List<Kit>
                     {
                         "Kit2"
                     }

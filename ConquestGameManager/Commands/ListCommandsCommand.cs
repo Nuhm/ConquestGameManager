@@ -2,6 +2,7 @@
 using System.Linq;
 using Rocket.API;
 using Rocket.Core;
+using Rocket.Core.Logging;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 
@@ -20,12 +21,20 @@ namespace ConquestGameManager.Commands
         {
             if (caller is not UnturnedPlayer player) return;
 
-            var accessibleCommands = (from rocketCommand in R.Commands.Commands where player.HasPermission($"rocket.{rocketCommand.Name}") select rocketCommand.Name).ToList();
-            
+            var permissionsToCheck = R.Commands.Commands.Select(cmd => $"{cmd.Name}").ToList();
+
+            var accessibleCommands = permissionsToCheck
+                .Where(permission => player.HasPermission(permission))
+                .ToList();
+
             UnturnedChat.Say(player,
                 accessibleCommands.Count > 0
                     ? $"Accessible commands: {string.Join(", ", accessibleCommands)}"
                     : "You don't have access to any commands.");
+
+            // Add debugging output to console
+            Logger.Log($"Permissions for {player.CharacterName}: {string.Join(", ", permissionsToCheck)}");
+            Logger.Log($"Accessible Commands for {player.CharacterName}: {string.Join(", ", accessibleCommands)}");
         }
     }
 }
