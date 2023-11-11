@@ -107,8 +107,9 @@ namespace ConquestGameManager.Events
 
                         var console = new ConsolePlayer();
                         
-                        // Wipes the players inventory when any kit is claimed
-                        uply.Player.inventory.ClearInventory();
+                        // Check if WipeInventoryWhenClaim is true before clearing the inventory
+                        if (kit.WipeInventoryWhenClaim)
+                            uply.Player.inventory.ClearInventory();
 
                         R.Commands.Execute(console, $"kit {kit.KitName} {uply.CSteamID}");
                         gamePlayer.LastUsedKit = kit;

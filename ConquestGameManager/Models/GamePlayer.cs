@@ -73,7 +73,7 @@ namespace ConquestGameManager.Models
             if (defaultRank != null)
             {
                 // Use the kits defined in the default rank
-                RankKits = defaultRank.RankKits.Select(kitName => new Kit(kitName, 0, false, false, false)).ToList();
+                RankKits = defaultRank.RankKits;
                 RankKitsMsg = string.Join(", ", RankKits.Select(kit => kit.KitName));
             }
             else

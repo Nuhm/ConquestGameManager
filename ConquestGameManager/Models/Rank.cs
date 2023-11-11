@@ -6,18 +6,18 @@ namespace ConquestGameManager.Models
     public class Rank
     {
         public string RankName { get; set; }
-        public List<string> RankKits { get; set; }
+        public List<Kit> RankKits { get; set; }
 
         // Parameterless constructor for serialization
         public Rank()
         {
-            RankKits = new List<string>();
+            RankKits = new List<Kit>();
         }
 
         public Rank(string rankName)
         {
             RankName = rankName;
-            RankKits = new List<string>();
+            RankKits = new List<Kit>();
         }
     }
 }

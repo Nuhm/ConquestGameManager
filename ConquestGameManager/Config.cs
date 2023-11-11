@@ -89,17 +89,18 @@ namespace ConquestGameManager
                 {
                     RankKits = new List<Kit>
                     {
-                        "Kit1"
+                        new Kit("Kit1", 0, false, false, false)
                     }
                 },
                 new Rank("Lvl 2")
                 {
                     RankKits = new List<Kit>
                     {
-                        "Kit2"
+                        new Kit("Kit2", 0, false, false, false)
                     }
                 }
             };
+
             DeployLimitSeconds = 10;
             RespawnLimitSeconds = 10;
             DeployWebhook = "";
