@@ -1,25 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ConquestGameManager.Managers;
+using Rocket.Unturned.Chat;
 
 namespace ConquestGameManager.Models
 {
-    public static class RankManager
+    public class RankManager
     {
-        public static List<Rank> Ranks { get; private set; }
+        private readonly Config config;
+        private readonly DatabaseManager databaseManager; // Add this field
 
-        static RankManager()
+        public async Task CheckAndHandleRankUp(GamePlayer gamePlayer)
         {
-            Ranks = new List<Rank>();
-        }
+            var currentRankID = gamePlayer.Rank;
+            var nextRankID = currentRankID + 1;
+            var nextRank = config.Ranks.FirstOrDefault(rank => rank.RankID == nextRankID);
 
-        public static void AddRank(string rankName)
-        {
-            Ranks.Add(new Rank(rankName));
-        }
-
-        public static Rank GetRank(string rankName)
-        {
-            return Ranks.Find(rank => rank.RankName.Equals(rankName, StringComparison.OrdinalIgnoreCase));
+            if (nextRank != null && gamePlayer.XP >= nextRank.RequiredXP)
+            {
+                await databaseManager.PromotePlayerAsync(gamePlayer.SteamID);
+                UnturnedChat.Say(gamePlayer.SteamID, $"Congratulations! You've been promoted to {nextRank.RankName}!");
+            }
         }
     }
 }

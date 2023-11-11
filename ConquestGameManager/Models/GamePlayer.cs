@@ -20,11 +20,15 @@ namespace ConquestGameManager.Models
         public List<Kit> CustomKits { get; set; }
         public Dictionary<Kit, DateTime> LastKitClaim { get; set; }
         public Kit LastUsedKit { get; set; }
+        public int Rank { get; set; }
+        public int XP { get; set; }
 
         public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
             SteamID = steamID;
             Username = username;
+            Rank = 0;
+            XP = 0;
             FirstJoined = firstJoined;
             LastJoined = lastJoined;
             Playtime = 0;
@@ -64,21 +68,16 @@ namespace ConquestGameManager.Models
 
         public void BuildRankKits()
         {
-            // Assuming you have a reference to your Config object
             var config = Main.Instance.Configuration.Instance;
-
-            // Find the default rank in the configuration
             var defaultRank = config.Ranks.FirstOrDefault(r => r.RankName.Equals(config.DefaultRank, StringComparison.OrdinalIgnoreCase));
 
             if (defaultRank != null)
             {
-                // Use the kits defined in the default rank
                 RankKits = defaultRank.RankKits;
                 RankKitsMsg = string.Join(", ", RankKits.Select(kit => kit.KitName));
             }
             else
             {
-                // Default rank not found in the configuration, no rank kits
                 RankKits = new List<Kit>();
                 RankKitsMsg = string.Empty;
             }

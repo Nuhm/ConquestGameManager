@@ -85,21 +85,28 @@ namespace ConquestGameManager
             };
             Ranks = new List<Rank>
             {
-                new Rank("Lvl 1")
+                new Rank
                 {
+                    RankID = 0,
+                    RankName = "Lvl 1", 
+                    RequiredXP = 0, 
                     RankKits = new List<Kit>
                     {
                         new Kit("Kit1", 0, false, false, false)
                     }
                 },
-                new Rank("Lvl 2")
+                new Rank
                 {
+                    RankID = 1,
+                    RankName = "Lvl 2", 
+                    RequiredXP = 1000, 
                     RankKits = new List<Kit>
                     {
                         new Kit("Kit2", 0, false, false, false)
                     }
-                }
+                },
             };
+
 
             DeployLimitSeconds = 10;
             RespawnLimitSeconds = 10;
