@@ -194,8 +194,12 @@ namespace ConquestGameManager.Managers
 
         private static void SetTimeOfDay(int time)
         {
-            R.Commands.Execute(new ConsolePlayer(), $"/time {time}");
+            TaskDispatcher.QueueOnMainThread(() =>
+            {
+                R.Commands.Execute(new ConsolePlayer(), $"/time {time}");
+            });
         }
+
         
         public bool ChangeGameMode(string newMode)
         {
