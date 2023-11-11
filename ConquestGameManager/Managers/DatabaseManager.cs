@@ -38,7 +38,7 @@ namespace ConquestGameManager.Managers
             try
             {
                 await conn.OpenAsync();
-                await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Rank` INT NOT NULL , `XP` INT NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , `Play Time` INT NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
+                await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Rank` INT NOT NULL , `XP` INT NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , `Playtime` INT NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
                 await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerStats` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Kills` INT NOT NULL , `Deaths` INT NOT NULL , `KDR` DOUBLE NOT NULL , `Headshots` INT NOT NULL , `Headshot Accuracy` DOUBLE NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
             }
             catch (Exception ex)
