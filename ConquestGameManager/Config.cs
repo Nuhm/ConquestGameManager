@@ -23,6 +23,8 @@ namespace ConquestGameManager
         public string DeployWebhook { get; set; }
         public string GameInfoWebhook { get; set; }
         public string DefaultRank { get; set; }
+        public int KillXP { get; set; }
+        public int HeadshotBonusXP { get; set; }
 
 
         public void LoadDefaults()
@@ -113,6 +115,8 @@ namespace ConquestGameManager
             DeployWebhook = "";
             GameInfoWebhook = "";
             DefaultRank = "DefaultRank";
+            KillXP = 100;
+            HeadshotBonusXP = 25;
         }
     }
 }

@@ -318,10 +318,10 @@ namespace ConquestGameManager.Managers
         
         public async Task UpdateXPAsync(UnturnedPlayer player, bool wasHeadshot)
         {
-            var xp = 100;
+            var xp = Main.Instance.Configuration.Instance.KillXP;
             if (wasHeadshot)
             {
-                xp = xp + 25;
+                xp = xp + Main.Instance.Configuration.Instance.HeadshotBonusXP;
             }
             
             using var conn = new MySqlConnection(ConnectionString);
