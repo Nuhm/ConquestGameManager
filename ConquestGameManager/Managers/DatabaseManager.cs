@@ -110,7 +110,7 @@ namespace ConquestGameManager.Managers
             }
         }
 
-        public async Task SetColumnValueAsync(CSteamID steamID, int id, string columnName)
+        private async Task SetColumnValueAsync(CSteamID steamID, int id, string columnName)
         {
             using var conn = new MySqlConnection(ConnectionString);
             try
@@ -252,17 +252,14 @@ namespace ConquestGameManager.Managers
                 await conn.CloseAsync();
             }
         }
-        
-        public async Task PromotePlayerAsync(CSteamID steamID)
+
+        private async Task PromotePlayerAsync(CSteamID steamID)
         {
             var player = await GetPlayerInfoAsync(steamID);
 
             if (player != null)
             {
-                // Increment the RankID
                 player.Rank++;
-
-                // Update the database
                 await SetColumnValueAsync(steamID, player.Rank, "Rank");
             }
         }
@@ -315,34 +312,89 @@ namespace ConquestGameManager.Managers
                 await conn.CloseAsync();
             }
         }
-        
-        public async Task UpdateXPAsync(UnturnedPlayer player, bool wasHeadshot)
+
+        private static async Task<int> GetXpAsync(GamePlayer gPlayer)
         {
-            var xp = Main.Instance.Configuration.Instance.KillXP;
-            if (wasHeadshot)
-            {
-                xp = xp + Main.Instance.Configuration.Instance.HeadshotBonusXP;
-            }
-            
             using var conn = new MySqlConnection(ConnectionString);
             try
             {
                 await conn.OpenAsync();
 
-                const string query = "UPDATE `GamePlayerInfo` SET `XP` = `XP` + @xp WHERE `SteamID` = @steamID;";
+                const string query = "SELECT `XP` FROM `GamePlayerInfo` WHERE `SteamID` = @steamID;";
                 var comm = new MySqlCommand(query, conn);
-                comm.Parameters.AddWithValue("@xp", xp);
-                comm.Parameters.AddWithValue("@steamID", player.CSteamID.ToString());
-                await comm.ExecuteNonQueryAsync();
+                comm.Parameters.AddWithValue("@steamID", gPlayer.SteamID);
+
+                var xp = await comm.ExecuteScalarAsync();
+                if (xp != null && int.TryParse(xp.ToString(), out int xpValue))
+                {
+                    return xpValue;
+                }
             }
             catch (Exception ex)
             {
-                Logger.Log($"Error updating XP for {player.DisplayName} in the database!");
+                Logger.Log($"Error fetching XP for {gPlayer.SteamID} from the database!");
                 Logger.Log(ex);
             }
             finally
             {
                 await conn.CloseAsync();
+            }
+
+            return 0; // Return a default value (you can change this based on your needs)
+        }
+
+        
+        public async Task UpdateXpAsync(CSteamID murderer, bool wasHeadshot)
+        {
+            var player = UnturnedPlayer.FromCSteamID(murderer);
+            var uPlayer = Main.Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
+            if (uPlayer == null)
+            {
+                Logger.Log($"Error: GamePlayer not found for murderer CSteamID: {murderer}");
+                return;
+            }
+            var xp = Main.Instance.Configuration.Instance.KillXp;
+            if (wasHeadshot)
+            {
+                xp += Main.Instance.Configuration.Instance.HeadshotBonusXp;
+            }
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "UPDATE `gameplayerinfo` SET `XP` = `XP` + @xp WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@xp", xp);
+                comm.Parameters.AddWithValue("@steamID", murderer);
+                await comm.ExecuteNonQueryAsync();
+
+                Logger.Log("Calling check for rank up");
+                Logger.Log($"killerPlayerGamePlayer: {uPlayer}");
+                await CheckAndHandleRankUp(uPlayer);
+                Logger.Log("Rank up check called");
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error updating XP & Rank for {murderer} in the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
+
+        private static async Task CheckAndHandleRankUp(GamePlayer gPlayer)
+        {
+            var nextRankID = gPlayer.Rank + 1;
+            var nextRank = Main.Instance.Configuration.Instance.Ranks.FirstOrDefault(rank => rank.RankID == nextRankID);
+            var playerXp = await GetXpAsync(gPlayer);
+
+            if (nextRank != null && playerXp >= nextRank.RequiredXp)
+            {
+                await Main.Instance.DatabaseManager.PromotePlayerAsync(gPlayer.SteamID);
             }
         }
         

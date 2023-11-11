@@ -56,7 +56,6 @@
     <Compile Include="Managers\DatabaseManager.cs" />
     <Compile Include="Managers\DiscordManager.cs" />
     <Compile Include="Managers\GameManager.cs" />
-    <Compile Include="Managers\RankManager.cs" />
     <Compile Include="Managers\SpawnManager.cs" />
     <Compile Include="Managers\TeamManager.cs" />
     <Compile Include="Models\Gamemode.cs" />

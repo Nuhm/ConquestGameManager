@@ -7,7 +7,7 @@ namespace ConquestGameManager.Models
     {
         public int RankID { get; set; }
         public string RankName { get; set; }
-        public int RequiredXP { get; set; }
+        public int RequiredXp { get; set; }
         public List<Kit> RankKits { get; set; }
 
         public Rank()
@@ -15,11 +15,11 @@ namespace ConquestGameManager.Models
             RankKits = new List<Kit>();
         }
 
-        public Rank(int rankID, string rankName, int requiredXP)
+        public Rank(int rankID, string rankName, int requiredXp)
         {
             RankID = rankID;
             RankName = rankName;
-            RequiredXP = requiredXP;
+            RequiredXp = requiredXp;
             RankKits = new List<Kit>();
         }
     }

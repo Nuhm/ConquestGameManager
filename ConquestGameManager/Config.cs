@@ -22,9 +22,8 @@ namespace ConquestGameManager
         public int RespawnLimitSeconds { get; set; }
         public string DeployWebhook { get; set; }
         public string GameInfoWebhook { get; set; }
-        public string DefaultRank { get; set; }
-        public int KillXP { get; set; }
-        public int HeadshotBonusXP { get; set; }
+        public int KillXp { get; set; }
+        public int HeadshotBonusXp { get; set; }
 
 
         public void LoadDefaults()
@@ -91,20 +90,22 @@ namespace ConquestGameManager
                 {
                     RankID = 0,
                     RankName = "Lvl 1", 
-                    RequiredXP = 0, 
+                    RequiredXp = 0, 
                     RankKits = new List<Kit>
                     {
-                        new Kit("Kit1", 0, false, false, false)
+                        new Kit("Kit11", 0, false, true, false),
+                        new Kit("Kit12", 30, false, false, true)
                     }
                 },
                 new Rank
                 {
                     RankID = 1,
                     RankName = "Lvl 2", 
-                    RequiredXP = 1000, 
+                    RequiredXp = 1000, 
                     RankKits = new List<Kit>
                     {
-                        new Kit("Kit2", 0, false, false, false)
+                        new Kit("Kit21", 0, false, true, false),
+                        new Kit("Kit22", 30, false, false, true)
                     }
                 },
             };
@@ -114,9 +115,8 @@ namespace ConquestGameManager
             RespawnLimitSeconds = 10;
             DeployWebhook = "";
             GameInfoWebhook = "";
-            DefaultRank = "DefaultRank";
-            KillXP = 100;
-            HeadshotBonusXP = 25;
+            KillXp = 100;
+            HeadshotBonusXp = 25;
         }
     }
 }

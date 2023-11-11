@@ -21,14 +21,14 @@ namespace ConquestGameManager.Models
         public Dictionary<Kit, DateTime> LastKitClaim { get; set; }
         public Kit LastUsedKit { get; set; }
         public int Rank { get; set; }
-        public int XP { get; set; }
+        public int Xp { get; set; }
 
         public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
             SteamID = steamID;
             Username = username;
             Rank = 0;
-            XP = 0;
+            Xp = 0;
             FirstJoined = firstJoined;
             LastJoined = lastJoined;
             Playtime = 0;
@@ -66,14 +66,14 @@ namespace ConquestGameManager.Models
             BuildCustomKits();
         }
 
-        public void BuildRankKits()
+        private void BuildRankKits()
         {
             var config = Main.Instance.Configuration.Instance;
-            var defaultRank = config.Ranks.FirstOrDefault(r => r.RankName.Equals(config.DefaultRank, StringComparison.OrdinalIgnoreCase));
+            var selectedRank = config.Ranks.FirstOrDefault(r => r.RankID == Rank);
 
-            if (defaultRank != null)
+            if (selectedRank != null)
             {
-                RankKits = defaultRank.RankKits;
+                RankKits = selectedRank.RankKits.ToList();
                 RankKitsMsg = string.Join(", ", RankKits.Select(kit => kit.KitName));
             }
             else
@@ -82,8 +82,8 @@ namespace ConquestGameManager.Models
                 RankKitsMsg = string.Empty;
             }
         }
-        
-        public void BuildCustomKits()
+
+        private void BuildCustomKits()
         {
             var player = new RocketPlayer(SteamID.ToString());
             var perms = R.Permissions.GetPermissions(player).Where(k => k.Name.Contains("kit.")).Select(k => k.Name.Replace("kit.", "")).ToList();

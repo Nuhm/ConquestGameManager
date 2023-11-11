@@ -81,7 +81,7 @@ namespace ConquestGameManager
                     var gPlayer = DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
                 });
             });
-            DatabaseManager.StartPlaytimeTracking(player.CSteamID);;
+            DatabaseManager.StartPlaytimeTracking(player.CSteamID);
             SpawnManager.Instance.RespawnPlayer(player);
         }
 
@@ -104,7 +104,7 @@ namespace ConquestGameManager
         {
             var gamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
             if (gamePlayer == null) return;
-            IEnumerable<Kit> wipeCooldown = gamePlayer.LastKitClaim.Where(k => k.Key.ResetCooldownOnDie == true).Select(k => k.Key).ToList();
+            IEnumerable<Kit> wipeCooldown = gamePlayer.LastKitClaim.Where(k => k.Key.ResetCooldownOnDie).Select(k => k.Key).ToList();
             foreach (var wipeKit in wipeCooldown)
             {
                 gamePlayer.LastKitClaim.Remove(wipeKit);
@@ -123,15 +123,14 @@ namespace ConquestGameManager
             var weaponType = GetWeaponType(killerPlayer);
             
             var distance = Math.Round(Vector3.Distance(player.Position, killerPlayer.Position), 2);
-            var killerPlayerGamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == murderer);
-            Instance.RankManager?.CheckAndHandleRankUp(killerPlayerGamePlayer);
             
             ThreadPool.QueueUserWorkItem(async (o) =>
             {
                 await Instance.DatabaseManager.UpdateDeathCountAsync(player);
                 await Instance.DatabaseManager.UpdateKillCountAsync(killerPlayer, wasHeadshot);
-                
-                await Instance.DatabaseManager.UpdateXPAsync(killerPlayer, wasHeadshot);
+                Logger.Log("Calling update xp");
+                await Instance.DatabaseManager.UpdateXpAsync(murderer, wasHeadshot);
+                Logger.Log("Running kill webhook");
                 
                 var embed = new Embed(null, $"**{player.DisplayName}** was killed by **{killerName}**!", null, "16714764", DateTime.UtcNow.ToString("s"),
                     new Footer(Provider.serverName, Provider.configData.Browser.Icon),
@@ -233,7 +232,7 @@ namespace ConquestGameManager
 
             if (kit.HasCooldown)
             {
-                gamePlayer?.LastKitClaim.Add(kit, DateTime.UtcNow);
+                gamePlayer.LastKitClaim.Add(kit, DateTime.UtcNow);
             }
             
             Logger.Log($"Has cooldown? {kit.HasCooldown}");
@@ -252,7 +251,6 @@ namespace ConquestGameManager
         };
 
         public DatabaseManager DatabaseManager { get; set; }
-        public RankManager RankManager { get; set; }
         public static Main Instance { get; private set; }
     }
 }
