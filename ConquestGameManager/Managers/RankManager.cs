@@ -1,21 +1,24 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using ConquestGameManager.Managers;
+using ConquestGameManager.Models;
 using Rocket.Unturned.Chat;
 
-namespace ConquestGameManager.Models
+namespace ConquestGameManager.Managers
 {
     public class RankManager
     {
-        private readonly Config config;
-        private readonly DatabaseManager databaseManager; // Add this field
+        private readonly DatabaseManager databaseManager;
+
+        public RankManager(DatabaseManager databaseManager)
+        {
+            this.databaseManager = databaseManager;
+        }
 
         public async Task CheckAndHandleRankUp(GamePlayer gamePlayer)
         {
             var currentRankID = gamePlayer.Rank;
             var nextRankID = currentRankID + 1;
-            var nextRank = config.Ranks.FirstOrDefault(rank => rank.RankID == nextRankID);
+            var nextRank = Main.Instance.Configuration.Instance.Ranks.FirstOrDefault(rank => rank.RankID == nextRankID);
 
             if (nextRank != null && gamePlayer.XP >= nextRank.RequiredXP)
             {

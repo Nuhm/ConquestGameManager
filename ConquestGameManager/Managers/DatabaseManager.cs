@@ -316,6 +316,36 @@ namespace ConquestGameManager.Managers
             }
         }
         
+        public async Task UpdateXPAsync(UnturnedPlayer player, bool wasHeadshot)
+        {
+            var xp = 100;
+            if (wasHeadshot)
+            {
+                xp = xp + 25;
+            }
+            
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "UPDATE `GamePlayerInfo` SET `XP` = `XP` + @xp WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@xp", xp);
+                comm.Parameters.AddWithValue("@steamID", player.CSteamID.ToString());
+                await comm.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error updating XP for {player.DisplayName} in the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
+        
         public async Task<GamePlayer> GetPlayerInfoAsync(CSteamID steamID)
         {
             using var conn = new MySqlConnection(ConnectionString);

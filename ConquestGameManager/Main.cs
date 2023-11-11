@@ -130,6 +130,8 @@ namespace ConquestGameManager
                 await Instance.DatabaseManager.UpdateDeathCountAsync(player);
                 await Instance.DatabaseManager.UpdateKillCountAsync(killerPlayer, wasHeadshot);
                 
+                await Instance.DatabaseManager.UpdateXPAsync(killerPlayer, wasHeadshot);
+                
                 var embed = new Embed(null, $"**{player.DisplayName}** was killed by **{killerName}**!", null, "16714764", DateTime.UtcNow.ToString("s"),
                     new Footer(Provider.serverName, Provider.configData.Browser.Icon),
                     new Author(null, null, null),
@@ -249,6 +251,7 @@ namespace ConquestGameManager
         };
 
         public DatabaseManager DatabaseManager { get; set; }
+        public RankManager RankManager { get; set; }
         public static Main Instance { get; private set; }
     }
 }
