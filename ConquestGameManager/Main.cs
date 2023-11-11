@@ -123,7 +123,8 @@ namespace ConquestGameManager
             var weaponType = GetWeaponType(killerPlayer);
             
             var distance = Math.Round(Vector3.Distance(player.Position, killerPlayer.Position), 2);
-
+            var killerPlayerGamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == murderer);
+            Instance.RankManager?.CheckAndHandleRankUp(killerPlayerGamePlayer);
             
             ThreadPool.QueueUserWorkItem(async (o) =>
             {
