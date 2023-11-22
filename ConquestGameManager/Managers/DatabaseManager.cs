@@ -38,7 +38,7 @@ namespace ConquestGameManager.Managers
             try
             {
                 await conn.OpenAsync();
-                await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Rank` INT NOT NULL , `XP` INT NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , `Playtime` INT NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
+                await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerInfo` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Rank` INT NOT NULL , `XP` INT NOT NULL , `Health Level` INT NOT NULL , `Movement Level` INT NOT NULL , `Jump Level` INT NOT NULL , `Stamina Level` INT NOT NULL , `First Joined` DATETIME NOT NULL , `Last Joined` DATETIME NOT NULL , `Playtime` INT NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
                 await new MySqlCommand("CREATE TABLE IF NOT EXISTS `GamePlayerStats` (`SteamID` BIGINT NOT NULL , `Username` VARCHAR(255) NOT NULL , `Kills` INT NOT NULL , `Deaths` INT NOT NULL , `KDR` DOUBLE NOT NULL , `Headshots` INT NOT NULL , `Headshot Accuracy` DOUBLE NOT NULL , PRIMARY KEY (`SteamID`));", conn).ExecuteScalarAsync();
             }
             catch (Exception ex)
@@ -59,7 +59,7 @@ namespace ConquestGameManager.Managers
                 try
                 {
                     await conn.OpenAsync();
-                    var comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerInfo` (`SteamID`, `Username`, `Rank`, `XP`, `First Joined`, `Last Joined`, `Playtime`) VALUES ({steamID}, '{username}', 0, 0, @date, @date, 0);", conn);
+                    var comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerInfo` (`SteamID`, `Username`, `Rank`, `XP`, `Health Level`, `Movement Level`, `Jump Level`, `Stamina Level`, `First Joined`, `Last Joined`, `Playtime`) VALUES ({steamID}, '{username}', 0, 0, 0, 0, 0, 0, @date, @date, 0);", conn);
                     comm.Parameters.AddWithValue("@date", DateTime.UtcNow);
                     await comm.ExecuteScalarAsync();
 
@@ -395,6 +395,47 @@ namespace ConquestGameManager.Managers
             if (nextRank != null && playerXp >= nextRank.RequiredXp)
             {
                 await Main.Instance.DatabaseManager.PromotePlayerAsync(gPlayer.SteamID);
+            }
+        }
+        
+        public async Task UpdatePlayerSkillLevelAsync(CSteamID steamID, int skillLevel, string skillType)
+        {
+            try
+            {
+                await UpdateSkillLevelAsync(steamID, skillLevel, skillType);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error updating {skillType} level for {steamID} in the database!");
+                Logger.Log(ex);
+            }
+        }
+
+        private async Task UpdateSkillLevelAsync(CSteamID steamID, int level, string skillType)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await new MySqlCommand($"UPDATE `GamePlayerInfo` SET `{skillType}` = {level} WHERE `SteamID` = {steamID};", conn).ExecuteScalarAsync();
+
+                lock (Data)
+                {
+                    GamePlayer data = Data.FirstOrDefault(k => k.SteamID == steamID);
+                    if (data != null)
+                    {
+                        data.UpdateSkillLevel(skillType, level);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error changing {skillType} level of {steamID} to {level}");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
             }
         }
         

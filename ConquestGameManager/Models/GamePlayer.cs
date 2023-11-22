@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Rocket.API;
 using Rocket.Core;
+using Rocket.Core.Logging;
 using Steamworks;
 
 namespace ConquestGameManager.Models
@@ -22,6 +23,11 @@ namespace ConquestGameManager.Models
         public Kit LastUsedKit { get; set; }
         public int Rank { get; set; }
         public int Xp { get; set; }
+        
+        public int HealthLevel { get; set; }
+        public int MovementLevel { get; set; }
+        public int JumpLevel { get; set; }
+        public int StaminaLevel { get; set; }
 
         public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
         {
@@ -29,6 +35,10 @@ namespace ConquestGameManager.Models
             Username = username;
             Rank = 0;
             Xp = 0;
+            HealthLevel = 0;
+            MovementLevel = 0;
+            JumpLevel = 0;
+            StaminaLevel = 0;
             FirstJoined = firstJoined;
             LastJoined = lastJoined;
             Playtime = 0;
@@ -56,6 +66,30 @@ namespace ConquestGameManager.Models
                     LastJoined = dateTime;
                     break;
                 default:
+                    break;
+            }
+        }
+        
+        public void UpdateSkillLevel(string skillType, int level)
+        {
+            // Implement logic to update the corresponding skill level in the GamePlayer instance
+            switch (skillType)
+            {
+                case "HealthLevel":
+                    HealthLevel = level;
+                    break;
+                case "MovementLevel":
+                    MovementLevel = level;
+                    break;
+                case "JumpLevel":
+                    JumpLevel = level;
+                    break;
+                case "StaminaLevel":
+                    StaminaLevel = level;
+                    break;
+                // Add more cases for other skill types if needed
+                default:
+                    Logger.Log($"Unsupported skill type: {skillType}");
                     break;
             }
         }
