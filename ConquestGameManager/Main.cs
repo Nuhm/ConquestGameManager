@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using ConquestGameManager.Managers;
 using ConquestGameManager.Models;
 using ConquestGameManager.Webhook;
@@ -207,8 +208,38 @@ namespace ConquestGameManager
             return "Unknown";
         }
         
+        private static void ApplySkillMultipliers(UnturnedPlayer player, int healthLevel, int movementLevel, int jumpLevel)
+        {
+            var healthMultiplier = 1.0f + (healthLevel * 0.01f);
+            player.Player.life.serverModifyHealth(healthMultiplier);
+            
+            var movementMultiplier = 1.0f + (movementLevel * 0.01f);
+            player.Player.movement.sendPluginSpeedMultiplier(movementMultiplier);
+
+            var jumpMultiplier = 1.0f + (jumpLevel * 0.01f);
+            player.Player.movement.sendPluginJumpMultiplier(jumpMultiplier);
+            
+            Logger.Log($"Updated skills for player {player.DisplayName}: Health: {healthMultiplier}, Movement: {movementMultiplier}, Jump: {jumpMultiplier}");
+        }
+
+
+        private static async Task UpdatePlayerSkillsOnRespawn(UnturnedPlayer player)
+        {
+            var gamePlayer = await Instance.DatabaseManager.GetPlayerSkillLevelsAsync(player.CSteamID);
+
+            if (gamePlayer == null)
+            {
+                Logger.Log($"Player {player.DisplayName} was not found in the database");
+                return;
+            }
+
+            ApplySkillMultipliers(player, gamePlayer.HealthLevel, gamePlayer.MovementLevel, gamePlayer.JumpLevel);
+        }
+        
         private static void EventOnRevive(UnturnedPlayer player, Vector3 position, byte angle)
         {
+            Task.Run(async () => await UpdatePlayerSkillsOnRespawn(player));
+            
             SpawnManager.Instance.RespawnPlayer(player);
             
             var gamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
