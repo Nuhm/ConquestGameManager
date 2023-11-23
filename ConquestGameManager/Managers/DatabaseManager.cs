@@ -59,15 +59,17 @@ namespace ConquestGameManager.Managers
                 try
                 {
                     await conn.OpenAsync();
-                    var comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerInfo` (`SteamID`, `Username`, `Rank`, `XP`, `Health Level`, `Movement Level`, `Jump Level`, `Stamina Level`, `First Joined`, `Last Joined`, `Playtime`) VALUES ({steamID}, '{username}', 0, 0, 0, 0, 0, 0, @date, @date, 0);", conn);
+                    var comm = new MySqlCommand($"INSERT IGNORE INTO `GamePlayerInfo` (`SteamID`, `Username`, `Rank`, `XP`, `Health Level`, `Movement Level`, `Jump Level`, `Stamina Level`, `First Joined`, `Last Joined`, `Playtime`) VALUES (@steamID, @username, 0, 0, 0, 0, 0, 0, @date, @date, 0);", conn);
                     comm.Parameters.AddWithValue("@date", DateTime.UtcNow);
+                    comm.Parameters.AddWithValue("@steamID", steamID);
+                    comm.Parameters.AddWithValue("@username", username);
                     await comm.ExecuteScalarAsync();
 
                     lock (Data)
                     {
                         if (!Data.Exists(k => k.SteamID == steamID))
                         {
-                            Data.Add(new GamePlayer(steamID, username, DateTime.UtcNow, DateTime.UtcNow));
+                            Data.Add(new GamePlayer(steamID, username, 0, 0, 0, 0, 0, 0, DateTime.UtcNow, DateTime.UtcNow));
                         }
                     }
                 }
@@ -253,13 +255,13 @@ namespace ConquestGameManager.Managers
             }
         }
 
-        private async Task PromotePlayerAsync(CSteamID steamID)
+        private async Task PromotePlayerAsync(CSteamID steamID, int nextRankID)
         {
             var player = await GetPlayerInfoAsync(steamID);
 
             if (player != null)
             {
-                player.Rank++;
+                player.Rank = nextRankID;
                 await SetColumnValueAsync(steamID, player.Rank, "Rank");
             }
         }
@@ -340,7 +342,7 @@ namespace ConquestGameManager.Managers
                 await conn.CloseAsync();
             }
 
-            return 0; // Return a default value (you can change this based on your needs)
+            return 0;
         }
 
         
@@ -388,13 +390,18 @@ namespace ConquestGameManager.Managers
 
         private static async Task CheckAndHandleRankUp(GamePlayer gPlayer)
         {
-            var nextRankID = gPlayer.Rank + 1;
+            var playerRank = await GetPlayerRankAsync(gPlayer.SteamID);
+            var nextRankID = playerRank + 1;
+            Logger.Log($"next rank id is: {nextRankID}");
             var nextRank = Main.Instance.Configuration.Instance.Ranks.FirstOrDefault(rank => rank.RankID == nextRankID);
+            Logger.Log($"next rank name is: {nextRank}");
             var playerXp = await GetXpAsync(gPlayer);
 
             if (nextRank != null && playerXp >= nextRank.RequiredXp)
             {
-                await Main.Instance.DatabaseManager.PromotePlayerAsync(gPlayer.SteamID);
+                Logger.Log($"Promoting player {gPlayer.Username}");
+                await Main.Instance.DatabaseManager.PromotePlayerAsync(gPlayer.SteamID, nextRankID);
+                await Main.Instance.DatabaseManager.UpdateSkillLevelsAsync(gPlayer.SteamID);
             }
         }
         
@@ -439,6 +446,50 @@ namespace ConquestGameManager.Managers
             }
         }
         
+        public async Task<GamePlayer> GetPlayerSkillLevelsAsync(CSteamID steamID)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "SELECT `Health Level`, `Movement Level`, `Jump Level`, `Stamina Level` FROM `GamePlayerInfo` WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", steamID.ToString());
+
+                using var reader = await comm.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    var healthLevel = Convert.ToInt32(reader["Health Level"]);
+                    var movementLevel = Convert.ToInt32(reader["Movement Level"]);
+                    var jumpLevel = Convert.ToInt32(reader["Jump Level"]);
+                    var staminaLevel = Convert.ToInt32(reader["Stamina Level"]);
+
+                    return new GamePlayer(steamID, "", 0,0, healthLevel, movementLevel, jumpLevel, staminaLevel, DateTime.MinValue, DateTime.MinValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error fetching skill levels for {steamID} from the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return null;
+        }
+        
+        public async Task UpdateSkillLevelsAsync(CSteamID steamID)
+        {
+            var skillType = "test";
+            var skillLevel = 0;
+            
+            await UpdatePlayerSkillLevelAsync(steamID, skillLevel, skillType);
+        }
+        
         public async Task<GamePlayer> GetPlayerInfoAsync(CSteamID steamID)
         {
             using var conn = new MySqlConnection(ConnectionString);
@@ -458,7 +509,7 @@ namespace ConquestGameManager.Managers
                     var firstJoined = Convert.ToDateTime(reader["First Joined"]);
                     var lastJoined = Convert.ToDateTime(reader["Last Joined"]);
 
-                    return new GamePlayer(steamID, username, firstJoined, lastJoined);
+                    return new GamePlayer(steamID, username, 0, 0, 0, 0,0 ,0, firstJoined, lastJoined);
                 }
             }
             catch (Exception ex)
@@ -471,6 +522,36 @@ namespace ConquestGameManager.Managers
                 await conn.CloseAsync();
             }
             return null;
+        }
+
+        private static async Task<int> GetPlayerRankAsync(CSteamID steamID)
+        {
+            using var conn = new MySqlConnection(ConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+
+                const string query = "SELECT `Rank` FROM `GamePlayerInfo` WHERE `SteamID` = @steamID;";
+                var comm = new MySqlCommand(query, conn);
+                comm.Parameters.AddWithValue("@steamID", steamID.ToString());
+
+                var rank = await comm.ExecuteScalarAsync();
+                if (rank != null && int.TryParse(rank.ToString(), out int rankValue))
+                {
+                    return rankValue;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"Error fetching rank for {steamID} from the database!");
+                Logger.Log(ex);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return 0;
         }
 
         public async Task<PlayerStats> GetPlayerStatsAsync(CSteamID steamID)
@@ -580,7 +661,7 @@ namespace ConquestGameManager.Managers
                                 continue;
                             }
 
-                            Data.Add(new GamePlayer(new CSteamID(id), username, firstJoined, lastJoined));
+                            Data.Add(new GamePlayer(new CSteamID(id), username, 0, 0, 0, 0,0 ,0, firstJoined, lastJoined));
                         }
                     }
                 }

@@ -91,6 +91,10 @@ namespace ConquestGameManager
                     RankID = 0,
                     RankName = "Lvl 1", 
                     RequiredXp = 0, 
+                    HealthLevel = 0,
+                    MovementLevel = 0,
+                    JumpLevel = 0,
+                    StaminaLevel = 0,
                     RankKits = new List<Kit>
                     {
                         new Kit("Kit11", 0, false, true, false),
@@ -102,6 +106,10 @@ namespace ConquestGameManager
                     RankID = 1,
                     RankName = "Lvl 2", 
                     RequiredXp = 1000, 
+                    HealthLevel = 0,
+                    MovementLevel = 0,
+                    JumpLevel = 0,
+                    StaminaLevel = 0,
                     RankKits = new List<Kit>
                     {
                         new Kit("Kit21", 0, false, true, false),

@@ -29,16 +29,16 @@ namespace ConquestGameManager.Models
         public int JumpLevel { get; set; }
         public int StaminaLevel { get; set; }
 
-        public GamePlayer(CSteamID steamID, string username, DateTime firstJoined, DateTime lastJoined)
+        public GamePlayer(CSteamID steamID, string username, int rank, int xp, int healthLevel, int movementLevel, int jumpLevel, int staminaLevel, DateTime firstJoined, DateTime lastJoined)
         {
             SteamID = steamID;
             Username = username;
-            Rank = 0;
-            Xp = 0;
-            HealthLevel = 0;
-            MovementLevel = 0;
-            JumpLevel = 0;
-            StaminaLevel = 0;
+            Rank = rank;
+            Xp = xp;
+            HealthLevel = healthLevel;
+            MovementLevel = movementLevel;
+            JumpLevel = jumpLevel;
+            StaminaLevel = staminaLevel;
             FirstJoined = firstJoined;
             LastJoined = lastJoined;
             Playtime = 0;
@@ -72,7 +72,6 @@ namespace ConquestGameManager.Models
         
         public void UpdateSkillLevel(string skillType, int level)
         {
-            // Implement logic to update the corresponding skill level in the GamePlayer instance
             switch (skillType)
             {
                 case "HealthLevel":
@@ -87,7 +86,6 @@ namespace ConquestGameManager.Models
                 case "StaminaLevel":
                     StaminaLevel = level;
                     break;
-                // Add more cases for other skill types if needed
                 default:
                     Logger.Log($"Unsupported skill type: {skillType}");
                     break;
