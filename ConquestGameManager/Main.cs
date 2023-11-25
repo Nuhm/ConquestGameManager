@@ -114,22 +114,37 @@ namespace ConquestGameManager
         private static void LimitMagazines(UnturnedPlayer player)
         {
             const int maxMagazinesLimit = 3;
-            if (player.Player.equipment.asset is ItemGunAsset equippedGun)
-            {
-                var gunMagazineId = equippedGun.getMagazineID();
-                var magazines = player.Inventory.items
-                    .Where(items => items != null && items.items != null)
-                    .SelectMany(items => items.items)
-                    .Where(item => item != null && item.item != null && item.item.id == gunMagazineId)
-                    .ToList();
 
-                while (magazines.Count > maxMagazinesLimit)
+            if (player.Player.equipment.asset is not ItemGunAsset equippedGun) return;
+            var gunMagazineId = equippedGun.getMagazineID();
+
+            var magazines = new List<(byte page, byte index)>();
+
+            for (byte page = 0; page < player.Inventory.items.Length; page++)
+            {
+                var itemsOnPage = player.Inventory.items[page];
+
+                if (itemsOnPage?.items == null) continue;
+        
+                for (byte index = 0; index < itemsOnPage.items.Count && itemsOnPage.items[index]?.item != null; index++)
                 {
-                    player.Inventory.removeItem(magazines.First().x, magazines.First().y);
-                    Logger.Log($"Removed excess magazine from {player.DisplayName}'s inventory.");
+                    if (itemsOnPage.items[index].item.id == gunMagazineId)
+                    {
+                        magazines.Add((page, index));
+                    }
                 }
             }
+
+            while (magazines.Count > maxMagazinesLimit)
+            {
+                var magazineToRemove = magazines[0];
+                player.Inventory.removeItem(magazineToRemove.page, magazineToRemove.index);
+                Logger.Log($"Removed excess magazine from {player.DisplayName}'s inventory. Page: {magazineToRemove.page}, Index: {magazineToRemove.index}");
+                magazines.RemoveAt(0);
+            }
         }
+
+
 
         private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {
@@ -209,7 +224,7 @@ namespace ConquestGameManager
             { EDeathCause.SUICIDE, "Suicide" },
             { EDeathCause.MELEE, "Melee Weapon" },
             { EDeathCause.PUNCH, "Fist" },
-            { EDeathCause.FOOD, "Hunter" },
+            { EDeathCause.FOOD, "Hunger" },
             { EDeathCause.KILL, "Admin" },
             { EDeathCause.SHRED, "Shredding" },
             { EDeathCause.WATER, "Thirst" },
