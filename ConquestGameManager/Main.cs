@@ -100,24 +100,18 @@ namespace ConquestGameManager
             DatabaseManager.ChangeLastJoin(player.CSteamID, DateTime.UtcNow);
         }
 
-        private static void RewardAmmo(UnturnedPlayer player)
+        private static void RewardAmmo(UnturnedPlayer player, ItemGunAsset equippedGun)
         {
-            byte ammoAmount = 1;
-            if (player.Player.equipment.asset is ItemGunAsset equippedGun)
-            {
-                var magazineId = equippedGun.getMagazineID();
-                player.GiveItem(magazineId, ammoAmount);
-                Logger.Log($"Player {player.DisplayName} received {ammoAmount} ammo upon kill.");
-            }
+            const byte ammoAmount = 1;
+            var magazineId = equippedGun.getMagazineID();
+            player.GiveItem(magazineId, ammoAmount);
+            Logger.Log($"Player {player.DisplayName} received {ammoAmount} ammo upon kill.");
         }
 
-        private static void LimitMagazines(UnturnedPlayer player)
+        private static void LimitMagazines(UnturnedPlayer player, ItemGunAsset equippedGun)
         {
             const int maxMagazinesLimit = 3;
-
-            if (player.Player.equipment.asset is not ItemGunAsset equippedGun) return;
             var gunMagazineId = equippedGun.getMagazineID();
-
             var magazines = new List<(byte page, byte index)>();
 
             for (byte page = 0; page < player.Inventory.items.Length; page++)
@@ -144,8 +138,6 @@ namespace ConquestGameManager
             }
         }
 
-
-
         private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {
             var killerPlayer = UnturnedPlayer.FromCSteamID(murderer);
@@ -161,9 +153,12 @@ namespace ConquestGameManager
                 gamePlayer.LastKitClaim.Remove(wipeKit);
                 Logger.Log($"Cleared cooldown for {wipeKit}");
             }
-            
-            RewardAmmo(killerPlayer);
-            LimitMagazines(killerPlayer);
+
+            if (killerPlayer.Player.equipment.asset is ItemGunAsset equippedGun)
+            {
+                RewardAmmo(killerPlayer, equippedGun);
+                LimitMagazines(killerPlayer, equippedGun);
+            }
             
             var wasHeadshot = limb == ELimb.SKULL;
             
