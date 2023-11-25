@@ -100,9 +100,44 @@ namespace ConquestGameManager
             DatabaseManager.ChangeLastJoin(player.CSteamID, DateTime.UtcNow);
         }
 
+        private static void RewardAmmo(UnturnedPlayer player)
+        {
+            byte ammoAmount = 1;
+            if (player.Player.equipment.asset is ItemGunAsset equippedGun)
+            {
+                var magazineId = equippedGun.getMagazineID();
+                player.GiveItem(magazineId, ammoAmount);
+                Logger.Log($"Player {player.DisplayName} received {ammoAmount} ammo upon kill.");
+            }
+        }
+
+        private static void LimitMagazines(UnturnedPlayer player)
+        {
+            const int maxMagazinesLimit = 3;
+            if (player.Player.equipment.asset is ItemGunAsset equippedGun)
+            {
+                var gunMagazineId = equippedGun.getMagazineID();
+                var magazines = player.Inventory.items
+                    .Where(items => items != null && items.items != null)
+                    .SelectMany(items => items.items)
+                    .Where(item => item != null && item.item != null && item.item.id == gunMagazineId)
+                    .ToList();
+
+                while (magazines.Count > maxMagazinesLimit)
+                {
+                    player.Inventory.removeItem(magazines.First().x, magazines.First().y);
+                    Logger.Log($"Removed excess magazine from {player.DisplayName}'s inventory.");
+                }
+            }
+        }
 
         private static void EventOnDeath(UnturnedPlayer player, EDeathCause cause, ELimb limb, CSteamID murderer)
         {
+            var killerPlayer = UnturnedPlayer.FromCSteamID(murderer);
+            var killerName = killerPlayer != null ? killerPlayer.DisplayName : "Unknown";
+            
+            if (killerPlayer == null || player == null) return;
+            
             var gamePlayer = Instance.DatabaseManager.Data.FirstOrDefault(k => k.SteamID == player.CSteamID);
             if (gamePlayer == null) return;
             IEnumerable<Kit> wipeCooldown = gamePlayer.LastKitClaim.Where(k => k.Key.ResetCooldownOnDie).Select(k => k.Key).ToList();
@@ -112,10 +147,8 @@ namespace ConquestGameManager
                 Logger.Log($"Cleared cooldown for {wipeKit}");
             }
             
-            var killerPlayer = UnturnedPlayer.FromCSteamID(murderer);
-            var killerName = killerPlayer != null ? killerPlayer.DisplayName : "Unknown";
-            
-            if (killerPlayer == null) return;
+            RewardAmmo(killerPlayer);
+            LimitMagazines(killerPlayer);
             
             var wasHeadshot = limb == ELimb.SKULL;
             
