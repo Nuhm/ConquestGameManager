@@ -23,6 +23,7 @@ namespace ConquestGameManager.Managers
         public int currentMap;
         private int previousGameModeIndex = -1;
         private bool gameTransitionInProgress;
+        public static List<UnturnedPlayer> AllPlayers { get; } = new();
         public static List<UnturnedPlayer> ActivePlayers { get; } = new();
 
         private GameManager()
@@ -88,7 +89,7 @@ namespace ConquestGameManager.Managers
                         return;
                     }
                     
-                    var playersToTeleport = GameManager.ActivePlayers.ToList();
+                    var playersToTeleport = ActivePlayers.ToList();
                     foreach (var player in playersToTeleport)
                     {
                         SpawnManager.Instance.ReturnToLobby(player);
@@ -128,17 +129,17 @@ namespace ConquestGameManager.Managers
             var randomGameModeIndex = GetRandomNonRepeatingGameModeIndex();
             currentGameModeIndex = randomGameModeIndex;
 
-            // Set the flag to indicate that a transition is in progress
-            gameTransitionInProgress = true;
-
             // Delay the game mode switch until the current game has fully ended
             Task.Run(async () =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)); // Adjust the delay as needed
                 SwitchToGameMode(currentGameModeIndex);
-
-                // Reset the flag now that the transition is complete
                 
+                // Reset the flag now that the transition is complete
+                gameTransitionInProgress = false;
+                
+                // End the game and wipe player lists
+                EndGame();
             });
         }
         
@@ -254,7 +255,11 @@ namespace ConquestGameManager.Managers
         public void PlayerJoinedGame(UnturnedPlayer player)
         {
             if (ActivePlayers.Contains(player)) return;
-            ActivePlayers.Add(player);
+            if (!AllPlayers.Contains(player))
+            {
+                AllPlayers.Add(player);
+                ActivePlayers.Add(player);
+            }
             Logger.Log($"{player} joined game");
                 
             ThreadPool.QueueUserWorkItem((o) =>
@@ -272,8 +277,11 @@ namespace ConquestGameManager.Managers
 
         public void PlayerLeftGame(UnturnedPlayer player)
         {
-            if (!ActivePlayers.Contains(player)) return;
-            ActivePlayers.Remove(player);
+            if (!AllPlayers.Contains(player)) return;
+            if (ActivePlayers.Contains(player))
+            {
+                ActivePlayers.Remove(player);
+            }
             Logger.Log($"{player} left game");
                 
             ThreadPool.QueueUserWorkItem((o) =>
@@ -287,6 +295,12 @@ namespace ConquestGameManager.Managers
                     null, null);
                 DiscordManager.SendEmbed(embed, "Returned to lobby", Main.Instance.Configuration.Instance.DeployWebhook);
             });
+        }
+        
+        private void EndGame()
+        {
+            AllPlayers.Clear();
+            ActivePlayers.Clear();
         }
 
         public IEnumerable<UnturnedPlayer> GetUnturnedPlayers() => ActivePlayers.ToList();
