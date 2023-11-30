@@ -9,11 +9,22 @@ using Rocket.Core;
 using Rocket.Core.Utils;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using Steamworks;
 using Logger = Rocket.Core.Logging.Logger;
 using Random = UnityEngine.Random;
 
 namespace ConquestGameManager.Managers
 {
+    public class PlayerInfo
+    {
+        public CSteamID SteamID { get; }
+        public string AssignedTeam { get; set; }
+
+        public PlayerInfo(CSteamID steamId)
+        {
+            SteamID = steamId;
+        }
+    }
     public class GameManager
     {
         private static GameManager instance;
@@ -25,6 +36,7 @@ namespace ConquestGameManager.Managers
         private bool gameTransitionInProgress;
         public static List<UnturnedPlayer> AllPlayers { get; } = new();
         public static List<UnturnedPlayer> ActivePlayers { get; } = new();
+        public static List<PlayerInfo> AllPlayersInfo { get; } = new List<PlayerInfo>();
 
         private GameManager()
         {
@@ -128,15 +140,15 @@ namespace ConquestGameManager.Managers
 
             var randomGameModeIndex = GetRandomNonRepeatingGameModeIndex();
             currentGameModeIndex = randomGameModeIndex;
+            
+            // Set the flag to indicate that a transition is in progress
+            gameTransitionInProgress = true;
 
             // Delay the game mode switch until the current game has fully ended
             Task.Run(async () =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)); // Adjust the delay as needed
                 SwitchToGameMode(currentGameModeIndex);
-                
-                // Reset the flag now that the transition is complete
-                gameTransitionInProgress = false;
                 
                 // End the game and wipe player lists
                 EndGame();
@@ -255,11 +267,10 @@ namespace ConquestGameManager.Managers
         public void PlayerJoinedGame(UnturnedPlayer player)
         {
             if (ActivePlayers.Contains(player)) return;
-            if (!AllPlayers.Contains(player))
-            {
-                AllPlayers.Add(player);
-                ActivePlayers.Add(player);
-            }
+    
+            AllPlayersInfo.Add(new PlayerInfo(player.CSteamID));
+            ActivePlayers.Add(player);
+            
             Logger.Log($"{player} joined game");
                 
             ThreadPool.QueueUserWorkItem((o) =>
@@ -277,11 +288,8 @@ namespace ConquestGameManager.Managers
 
         public void PlayerLeftGame(UnturnedPlayer player)
         {
-            if (!AllPlayers.Contains(player)) return;
-            if (ActivePlayers.Contains(player))
-            {
-                ActivePlayers.Remove(player);
-            }
+            ActivePlayers.Remove(player);
+            
             Logger.Log($"{player} left game");
                 
             ThreadPool.QueueUserWorkItem((o) =>
@@ -299,9 +307,32 @@ namespace ConquestGameManager.Managers
         
         private void EndGame()
         {
+            AllPlayersInfo.Clear();
             AllPlayers.Clear();
             ActivePlayers.Clear();
         }
+        
+        public bool IsPlayerAssignedToTeam(UnturnedPlayer player)
+        {
+            return AllPlayersInfo.Any(p => p.SteamID == player.CSteamID && !string.IsNullOrEmpty(p.AssignedTeam));
+        }
+
+        public void SetPlayerTeam(UnturnedPlayer player, string teamName)
+        {
+            var existingPlayer = AllPlayersInfo.FirstOrDefault(p => p.SteamID == player.CSteamID);
+
+            if (existingPlayer != null)
+            {
+                existingPlayer.AssignedTeam = teamName;
+            }
+        }
+
+        public string GetPlayerTeam(UnturnedPlayer player)
+        {
+            var existingPlayer = AllPlayersInfo.FirstOrDefault(p => p.SteamID == player.CSteamID);
+            return existingPlayer?.AssignedTeam;
+        }
+
 
         public IEnumerable<UnturnedPlayer> GetUnturnedPlayers() => ActivePlayers.ToList();
     }

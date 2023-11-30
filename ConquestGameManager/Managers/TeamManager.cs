@@ -22,13 +22,28 @@ namespace ConquestGameManager.Managers
             
             if (currentGameModeName.Equals("tdm", StringComparison.OrdinalIgnoreCase))
             {
-                var random = new Random();
-                var randomTeamID = random.Next(2, 4);
+                // Check if the player is already assigned to a team
+                if (!GameManager.Instance.IsPlayerAssignedToTeam(player))
+                {
+                    var random = new Random();
+                    var randomTeamID = random.Next(2, 4);
+                    
+                    var groupName = randomTeamID == 2 ? "BLUFOR" : "OPFOR";
+                    var steamGroupId = randomTeamID == 2 ? (CSteamID)2 : (CSteamID)3;
 
-                var groupName = randomTeamID == 2 ? "BLUFOR" : "OPFOR";
-                var steamGroupId = randomTeamID == 2 ? (CSteamID)2 : (CSteamID)3;
+                    AssignPlayerToGroup(player, steamGroupId, groupName);
 
-                AssignPlayerToGroup(player, steamGroupId, groupName);
+                    // Update GameManager's AllPlayers list with the team assignment
+                    GameManager.Instance.SetPlayerTeam(player, groupName);
+                }
+                else
+                {
+                    // Player is already assigned to a team, add them to that team again
+                    var assignedTeam = GameManager.Instance.GetPlayerTeam(player);
+                    var steamGroupId = assignedTeam == "BLUFOR" ? (CSteamID)2 : (CSteamID)3;
+
+                    AssignPlayerToGroup(player, steamGroupId, assignedTeam);
+                }
             }
 
             Logger.Log($"Assigned {player} to group");
