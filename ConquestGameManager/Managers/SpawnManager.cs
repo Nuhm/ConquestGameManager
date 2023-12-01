@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using ConquestGameManager.Models;
 using ConquestGameManager.Webhook;
 using Rocket.Core.Utils;
 using Rocket.Unturned.Chat;
@@ -106,16 +107,7 @@ namespace ConquestGameManager.Managers
                 }
                 player.Player.teleportToLocationUnsafe(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
 
-                var steamGroupId = (CSteamID)1;
-                var group = GroupManager.getOrAddGroup(steamGroupId, "Inactive Players Group", out var wasCreated);
-
-                if (!wasCreated)
-                {
-                    group.name = "Inactive Players Group";
-                    GroupManager.sendGroupInfo(group);
-                }
-
-                player.Player.quests.ServerAssignToGroup(steamGroupId, EPlayerGroupRank.MEMBER, true);
+                TeamManager.Instance.AssignPlayerToGroup(player, new Team(1, "Inactive Players Group"));
 
                 player.Teleport(new Vector3(Main.Instance.Configuration.Instance.LobbyX, Main.Instance.Configuration.Instance.LobbyY, Main.Instance.Configuration.Instance.LobbyZ), 0);
                 UnturnedChat.Say(player, "You have been returned to the lobby!");
