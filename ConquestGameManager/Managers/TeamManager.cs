@@ -44,13 +44,26 @@ namespace ConquestGameManager.Managers
                 // Check if the player is already assigned to a team
                 if (!GameManager.Instance.IsPlayerAssignedToTeam(player))
                 {
-                    // Add player to a random team
-                    var random = new Random();
-                    var randomTeamID = random.Next(2, 4);
-                    var team = teams.Find(t => t.TeamID == randomTeamID);
+                    var activeTeams = teams.Where(t => t.TeamID >= 2 && t.TeamID <= 3).ToList();
+                    var teamWithFewestPlayers = activeTeams.OrderBy(t => t.TeamMembers.Count).First();
 
-                    AssignPlayerToGroup(player, team);
-                    GameManager.Instance.SetPlayerTeam(player, team.TeamName);
+                    // Check if teams are in-balanced
+                    if (teamWithFewestPlayers.TeamMembers.Count - activeTeams.Where(t => t != teamWithFewestPlayers).Sum(t => t.TeamMembers.Count) < 2)
+                    {
+                        var team = teamWithFewestPlayers;
+                        AssignPlayerToGroup(player, team);
+                        GameManager.Instance.SetPlayerTeam(player, team.TeamName);
+                    }
+                    else
+                    {
+                        // Teams are balanced, assign the player to a random team
+                        var random = new Random();
+                        var randomTeamID = random.Next(2, 4);
+                        var team = teams.Find(t => t.TeamID == randomTeamID);
+
+                        AssignPlayerToGroup(player, team);
+                        GameManager.Instance.SetPlayerTeam(player, team.TeamName);
+                    }
                 }
                 else
                 {
