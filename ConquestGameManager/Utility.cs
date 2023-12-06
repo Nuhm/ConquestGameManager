@@ -52,6 +52,12 @@ namespace ConquestGameManager
             inv.player.equipment.sendSlot(1);
             Logger.Log("Cleared inventory");
         }
+        
+        public static void ClearClothing(this PlayerInventory inv)
+        {
+            inv.player.clothing.updateClothes(0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>(), 0, 0, Array.Empty<byte>());
+            Logger.Log("Cleared clothing");
+        }
 
         public static string ToUnrich(this string value) => new Regex(@"<[^>]*>", RegexOptions.IgnoreCase).Replace(value, "").Trim();
         public static string ToRich(this string value) => value.Replace('[', '<').Replace(']', '>').Replace("osqb", "[").Replace("csqb", "]");

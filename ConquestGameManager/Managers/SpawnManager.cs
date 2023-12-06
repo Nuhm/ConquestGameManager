@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ConquestGameManager.Models;
@@ -61,6 +62,8 @@ namespace ConquestGameManager.Managers
                         {
                             Logger.Log($"Player respawn at spawn point {randomLocation.LocationID} on {map.MapName}.");
                         }
+
+                        SetRandomOutfit(player);
                     }
                     else
                     {
@@ -114,7 +117,49 @@ namespace ConquestGameManager.Managers
             });
             
             GameManager.ActivePlayers.Remove(player);
+            SetLobbyOutfit(player);
+        }
+
+        private readonly List<Outfit> outfits = new List<Outfit>
+        {
+            new Outfit(1, 253, 1199, 1427, 1270, 1419, 1424, 1425),
+            new Outfit(2, 253, 1199, 1427, 1270, 1419, 1424, 1425)
+        };
+
+        private void SetRandomOutfit(UnturnedPlayer player)
+        {
+            player.Player.inventory.ClearClothing();
             
+            var random = new Random();
+            var randomIndex = random.Next(outfits.Count);
+            var randomOutfit = outfits[randomIndex];
+
+            // Apply the outfit to the player using the provided clothing item IDs
+            player.GiveItem(randomOutfit.Backpack, 1);
+            player.GiveItem(randomOutfit.Glasses, 1);
+            player.GiveItem(randomOutfit.Hat, 1);
+            player.GiveItem(randomOutfit.Mask, 1);
+            player.GiveItem(randomOutfit.Pants, 1);
+            player.GiveItem(randomOutfit.Shirt, 1);
+            player.GiveItem(randomOutfit.Vest, 1);
+
+            Logger.Log($"Gave {player.DisplayName} outfit: {randomOutfit.ID}");
+        }
+
+        private void SetLobbyOutfit(UnturnedPlayer player)
+        {
+            player.Player.inventory.ClearClothing();
+            
+            // Apply the outfit to the player using the provided clothing item IDs
+            player.GiveItem(0, 1);
+            player.GiveItem(0, 1);
+            player.GiveItem(0, 1);
+            player.GiveItem(0, 1);
+            player.GiveItem(1517, 1);
+            player.GiveItem(1516, 1);
+            player.GiveItem(1518, 1);
+
+            Logger.Log($"Gave {player.DisplayName} the default lobby outfit");
         }
     }
 }
